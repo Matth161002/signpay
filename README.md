@@ -182,21 +182,6 @@ Use a PayPal Sandbox buyer account to pay invoices sent to the customer email ad
 
 Do not use live PayPal credentials for demonstration or testing.
 
-### 5. Start the main application
-
-In a separate terminal, from the repository root:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-### 6. PayPal Sandbox testing
-
-Use PayPal Sandbox credentials and accounts when testing invoice creation and payment. Configure a webhook endpoint reachable by PayPal and register its webhook identifier in the local environment. The application verifies webhook signatures before recording payment confirmation.
-
-Do not use live PayPal credentials for local demonstration or testing.
 
 ## Hackathon project
 
