@@ -94,6 +94,14 @@ Requirements:
 - Astropods CLI.
 - An authenticated Astropods account.
 
+Copy the example environment file and configure the required values:
+
+```bash
+cp .env.example .env
+```
+
+Set `ASTRO_GATEWAY_URL`, `ASTRO_GATEWAY_API_KEY`, and `SIGNPAY_AGENT_API_KEY` in `.env`. The shared SignPay key must match the value in the main application's `.env.local`. Use a random value of at least 32 characters.
+
 Install dependencies:
 
 ```bash
