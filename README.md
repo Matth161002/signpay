@@ -116,34 +116,71 @@ cd signpay
 npm install
 ```
 
-### 3. Configure environment variables
+### 3. Configure the main application
 
-Create a local `.env.local` file in the repository root. Configure the values required by the application, including:
+Copy the example environment file to `.env.local` in the repository root:
 
-- PayPal Sandbox application credentials.
-- PayPal business account email.
-- PayPal webhook identifier.
-- SignPay agent endpoint and shared authentication key.
-- Any other environment values required by the application.
+```bash
+cp .env.example .env.local
+```
 
-Create the agent's local environment configuration separately in `signpay-agent/`, including the Astropods Gateway credentials and the matching SignPay agent authentication key.
+Set the following values in `.env.local`:
 
-**Do not commit either environment file or share its contents.** Use the variable names expected by the application and agent configuration. Never put secret values in source code.
+| Variable | Purpose |
+|---|---|
+| `PAYPAL_CLIENT_ID` | Client ID from your PayPal Developer Sandbox application. |
+| `PAYPAL_CLIENT_SECRET` | Secret from the same Sandbox application. |
+| `PAYPAL_BUSINESS_EMAIL` | Email address of your PayPal Business Sandbox account. |
+| `PAYPAL_WEBHOOK_ID` | Webhook ID for the Sandbox webhook registered to receive invoice-paid events. |
+| `SIGNPAY_AGENT_URL` | URL at which the local AI agent can be reached. The application defaults to `http://localhost:3200`. |
+| `SIGNPAY_AGENT_API_KEY` | Shared secret used to authenticate requests between the application and agent. Use at least 32 characters. |
+
+Use PayPal Sandbox credentials, not live credentials. The PayPal webhook must be reachable by PayPal during payment testing. For local testing, this requires a public HTTPS tunnel to the application's webhook route, `/api/paypal/webhook`. Register the resulting URL in the PayPal Developer Dashboard and use its webhook ID above.
 
 ### 4. Configure and start the AI agent
 
-From the agent directory:
+The agent has a separate environment file. From the repository root:
 
 ```bash
 cd signpay-agent
+cp .env.example .env
 bun install
+```
+
+Set these values in `signpay-agent/.env`:
+
+| Variable | Purpose |
+|---|---|
+| `ASTRO_GATEWAY_URL` | Astropods AI Gateway endpoint. |
+| `ASTRO_GATEWAY_API_KEY` | Astropods AI Gateway API key. |
+| `SIGNPAY_AGENT_API_KEY` | The same shared secret configured in the main application's `.env.local`. |
+
+The agent uses the Astropods Gateway and the model configured in `astropods.yml`. Authenticate the Astropods CLI and start the project:
+
+```bash
 ast login
 ast project start
 ```
 
-Configure the required `SIGNPAY_AGENT_API_KEY` as an Astropods secret input, and ensure the main application uses the matching key. The agent's HTTP service defaults to port `8080` inside its development interface configuration.
+The agent listens on port `8080` within its service configuration. Astropods may expose it through a local development URL; set `SIGNPAY_AGENT_URL` in the main application's `.env.local` to the URL reported by the CLI. In the current local development setup this has been `http://localhost:3200`.
 
 For further agent-specific details, see [signpay-agent/README.md](signpay-agent/README.md).
+
+### 5. Start the main application
+
+Open a separate terminal at the repository root:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+### 6. PayPal Sandbox testing
+
+Use a PayPal Sandbox buyer account to pay invoices sent to the customer email address. Configure a webhook endpoint reachable by PayPal and register its webhook identifier in `.env.local`. The application verifies webhook signatures before recording payment confirmation.
+
+Do not use live PayPal credentials for demonstration or testing.
 
 ### 5. Start the main application
 
