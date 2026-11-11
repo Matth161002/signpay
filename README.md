@@ -98,7 +98,7 @@ Local databases, agreement data, environment files and credentials are excluded 
 
 ### Requirements
 
-- Node.js and npm.
+- Node.js 24.x and npm.
 - Bun.
 - Astropods CLI and an authenticated Astropods account.
 - PayPal Developer Sandbox application and Sandbox buyer account for testing invoice payments.
