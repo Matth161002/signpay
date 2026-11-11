@@ -4,16 +4,18 @@
 
 SignPay is a prototype developed for the PayPal AI Hackathon. It is designed to help service providers and customers assess whether a payment request is consistent with the work and payment terms they agreed.
 
-Rather than automatically deciding whether physical work has been completed, SignPay compares the provider's completion statement and any customer objection with the original agreement. It identifies clear discrepancies and sends uncertain cases for human review before the payment workflow proceeds.
+SignPay's assessment process is text-based. The provider submits a written completion statement, and the customer may submit a written objection at a later stage. The AI compares this information with the original agreement. It does not verify physical work or analyse photographs.
 
 ## How it works
 
 1. **Create an agreement.** The provider and customer record the service, agreed work, requirements and payment amount.
 2. **Sign the agreement.** Both participants authenticate and provide a digital signature.
-3. **Submit a payment request.** The provider supplies a completion statement and requested amount. The customer can submit an objection.
-4. **Assess the request.** SignPay checks the requested amount against the agreed amount separately, then uses its AI assessment agent to compare the submitted information with the agreement.
-5. **Issue an invoice.** Where the assessment permits the workflow to proceed, the application creates and sends a PayPal invoice.
-6. **Confirm payment.** PayPal processes the payment. SignPay uses a verified PayPal webhook to record the confirmed payment status.
+3. **Provider requests payment.** The provider submits a payment request, including the requested amount and a written completion statement.
+4. **Initial AI assessment.** SignPay checks the requested amount against the agreed amount separately, then the AI assesses the provider's completion statement against the original agreement.
+5. **Customer objection.** Only after the provider's request has passed the initial AI assessment can the customer submit a written objection. The customer cannot object before a payment request has been submitted and accepted by the initial assessment.
+6. **Further assessment.** If an objection is submitted, the AI compares it with the original agreement and the provider's completion statement. A discrepancy or uncertainty is identified rather than silently disregarded.
+7. **Invoice and payment.** Where the assessment workflow permits it to proceed, the application creates and sends a PayPal invoice. PayPal processes the payment.
+8. **Payment confirmation.** SignPay uses a verified PayPal webhook to record the confirmed payment status.
 
 ## Assessment outcomes
 
@@ -62,6 +64,7 @@ The prototype includes several security controls:
 - Sessions use opaque random tokens, with token hashes stored in the database and an HTTP-only, SameSite cookie.
 - Agreement access is restricted to the authenticated participants.
 - Server-side role and participant checks prevent one participant from signing or submitting an objection on behalf of the other.
+- The customer objection is only available after the provider's payment request has passed the initial AI assessment.
 - The agent endpoint requires a shared API key and uses timing-safe comparison.
 - Agent input and structured output are validated using Zod.
 - User-supplied case descriptions are treated as untrusted data, not instructions that can change the agent's assessment rules.
@@ -72,8 +75,8 @@ These controls are intended to demonstrate security principles in a prototype. T
 
 ## Important limitations
 
-- **AI does not prove that work happened.** It assesses the consistency of the statements and information submitted against the agreement.
-- **Evidence is not independently authenticated.** For example, a photograph supplied by a user is not proof that the depicted work was completed at the agreed location or time.
+- **Text-based assessment only.** The provider's completion statement and the customer's objection are written text. The prototype does not accept or analyse photographs or other visual evidence.
+- **AI does not prove that work happened.** It assesses the consistency of the submitted statements against the agreement.
 - **Human resolution remains necessary.** SignPay identifies uncertainty but does not provide a full dispute-resolution service.
 - **The AI does not move money.** PayPal handles invoicing and payment. SignPay records payment status from verified webhook notifications.
 - **The project is a hackathon prototype.** It has been tested using local services and PayPal Sandbox, not established as a production payment service.
@@ -160,4 +163,4 @@ Do not use live PayPal credentials for local demonstration or testing.
 
 ## Hackathon project
 
-SignPay explores how AI assessment can be combined with signed agreements, deterministic checks and payment infrastructure. Its central design principle is to keep the AI's role limited: it assesses submitted information, while application logic enforces fixed agreement and payment checks, participants retain responsibility for resolving uncertain cases, and PayPal remains responsible for processing payments.
+SignPay explores how AI assessment can be combined with signed agreements, deterministic checks and payment infrastructure. Its central design principle is to keep the AI's role limited: it assesses text submitted by the participants, while application logic enforces fixed agreement and payment checks, the customer can only object after the provider's request passes its initial assessment, participants retain responsibility for resolving uncertain cases, and PayPal remains responsible for processing payments.
