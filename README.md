@@ -6,6 +6,28 @@ SignPay is a prototype developed for the PayPal AI Hackathon. It helps service p
 
 The assessment is text-based. The provider submits a written completion statement and the customer may submit a written objection. The AI compares those statements with the original agreement. It does not verify physical work, analyse photographs or move money.
 
+## Demonstration
+
+The screenshots below show the main stages of a completed SignPay transaction, from agreement signing through AI assessment to PayPal payment confirmation.
+
+### 1. Both participants sign the agreement
+
+![SignPay agreement review showing both participants' signatures](docs/screenshots/01-agreement-signed.jpg)
+
+### 2. SignPay assesses the completion statement
+
+![SignPay assessment result showing PROCEED](docs/screenshots/02-ai-assessment.jpg)
+
+### 3. PayPal confirms the invoice has been paid
+
+![SignPay completed agreement with PayPal payment confirmation](docs/screenshots/03-payment-confirmed.jpg)
+
+### 4. PayPal delivers the payment webhook
+
+![PayPal Sandbox webhook event showing successful delivery](docs/screenshots/04-paypal-webhook.jpg)
+
+These screenshots are from a successful PayPal Sandbox test. They demonstrate the recorded application state and webhook delivery; they are not evidence that the AI independently verified the physical work.
+
 ## For judges
 
 The repository includes an empty `.env.local` in the correct location. Use the adjacent `.env.example` as the template and enter your own PayPal Sandbox credentials and SignPay settings.
@@ -13,7 +35,6 @@ The repository includes an empty `.env.local` in the correct location. Use the a
 The AI agent is configured through Astropods. **You do not need a `signpay-agent/.env` file.** From the `signpay-agent` directory, run `ast project configure` and set `SIGNPAY_AGENT_API_KEY` to the same random secret used in the main application's `.env.local`. Astropods supplies the AI Gateway development credentials when the agent starts.
 
 For the complete installation, configuration, webhook and test instructions, go to [Run SignPay locally](#run-signpay-locally).
-
 ---
 
 ## How it works
@@ -101,7 +122,7 @@ signpay/
 └── README.md
 ```
 
-The agent has its own README. The blank root `.env.local` is included as a convenience for judges; do not commit real credentials or overwrite the committed file with populated secrets. Local databases are excluded from source control.
+The agent has its own README. The blank root `.env.local` is included as a convenience for judges. Keep it blank in Git and never commit real credentials. Local databases are excluded from source control.
 
 ---
 
@@ -202,12 +223,22 @@ On Windows, if you downloaded the executable rather than installing it on your P
 .\cloudflared.exe tunnel --url http://localhost:3000
 ```
 
-Cloudflare will display a temporary public HTTPS URL. In the PayPal Developer Dashboard:
+Cloudflare will display a temporary public HTTPS URL, for example `https://example.trycloudflare.com`. **Copy that URL and append `/api/paypal/webhook`.** This complete address is the webhook URL you must enter in PayPal:
 
-1. Open your Sandbox application and its webhook settings.
-2. Add a webhook using the HTTPS URL followed by `/api/paypal/webhook`.
-3. Subscribe to the `INVOICING.INVOICE.PAID` event.
-4. Save the webhook and copy its webhook ID into `PAYPAL_WEBHOOK_ID` in the root `.env.local`.
+```text
+https://example.trycloudflare.com/api/paypal/webhook
+```
+
+In the PayPal Developer Dashboard:
+
+1. Open **Apps & Credentials** and select the **Sandbox** tab.
+2. Open the same Sandbox REST application whose Client ID and Secret you entered in `.env.local`. The webhook must belong to this application.
+3. Find its **Webhooks** section and select **Add Webhook**.
+4. Paste the complete Cloudflare address ending in `/api/paypal/webhook` into the **Webhook URL** field. Do not enter `localhost` and do not omit the endpoint path.
+5. Select the `INVOICING.INVOICE.PAID` event. This is the event SignPay uses to record a paid invoice.
+6. Save the webhook. Copy the generated **Webhook ID** into `PAYPAL_WEBHOOK_ID` in the root `.env.local`. This is the webhook ID, not the application's Client ID or Secret.
+
+Restart the Next.js development server after updating `.env.local` so the new webhook ID is loaded.
 
 If the Quick Tunnel is restarted, its public URL may change. Update the webhook URL in the PayPal Developer Dashboard and update `PAYPAL_WEBHOOK_ID` if you create a replacement webhook.
 
