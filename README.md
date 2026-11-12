@@ -6,69 +6,13 @@ SignPay is a prototype developed for the PayPal AI Hackathon. It helps service p
 
 The assessment is text-based. The provider submits a written completion statement and the customer may submit a written objection. The AI compares those statements with the original agreement. It does not verify physical work, analyse photographs or move money.
 
-## Judge setup: start here
+## For judges
 
-An empty `.env.local` is already included in the repository, beside the root `package.json`. Open it and use the `.env.example` beside it as your guide. Enter your PayPal Sandbox credentials, the agent URL and a random `SIGNPAY_AGENT_API_KEY` of at least 32 characters.
+The repository includes an empty `.env.local` in the correct location. Use the adjacent `.env.example` as the template and enter your own PayPal Sandbox credentials and SignPay settings.
 
-**You do not need to create a second environment file for the AI agent when using Astropods.** Astropods supplies the AI Gateway development credentials automatically. You only need to configure the shared SignPay key once in the agent's local Astropods project settings.
+The AI agent is configured through Astropods. **You do not need a `signpay-agent/.env` file.** From the `signpay-agent` directory, run `ast project configure` and set `SIGNPAY_AGENT_API_KEY` to the same random secret used in the main application's `.env.local`. Astropods supplies the AI Gateway development credentials when the agent starts.
 
-From a second terminal, run these commands from the repository root:
-
-```powershell
-Set-Location signpay-agent
-ast login
-ast project configure
-```
-
-When prompted, enter the value for `SIGNPAY_AGENT_API_KEY`. It must be exactly the same value you entered in the root `.env.local`. Astropods stores this value locally and supplies it to the agent when it starts.
-
-Then start the agent from that same `signpay-agent` directory:
-
-```powershell
-ast project start
-```
-
-Keep this terminal running. The main application's `SIGNPAY_AGENT_URL` must point to the local agent URL used by this setup.
-
-### Main application: `.env.local`
-
-Open `signpay/.env.local` and enter:
-
-```dotenv
-# PayPal Developer Sandbox application
-PAYPAL_CLIENT_ID=your_sandbox_client_id
-PAYPAL_CLIENT_SECRET=your_sandbox_client_secret
-PAYPAL_BUSINESS_EMAIL=your_sandbox_business_account_email
-PAYPAL_WEBHOOK_ID=your_sandbox_webhook_id
-
-# SignPay AI assessment agent
-SIGNPAY_AGENT_URL=http://localhost:3200
-SIGNPAY_AGENT_API_KEY=replace_with_a_random_secret_of_at_least_32_characters
-```
-
-### AI agent: `signpay-agent/.env`
-
-Open `signpay/signpay-agent/.env` and enter your Astropods Gateway details and the shared secret:
-
-```dotenv
-ASTRO_GATEWAY_URL=your_astropods_gateway_url
-ASTRO_GATEWAY_API_KEY=your_astropods_gateway_api_key
-SIGNPAY_AGENT_API_KEY=replace_with_the_same_random_secret_of_at_least_32_characters
-```
-
-**The two `SIGNPAY_AGENT_API_KEY` values must match exactly.** Generate your own random secret of at least 32 characters. Do not use the example placeholder as a real key.
-
-The example files are templates only. They are safe to copy and edit; never commit the completed `.env.local` or `.env` files, and never put real credentials in the example files.
-
-### What you need
-
-- Node.js 24.x and npm.
-- Bun.
-- Astropods CLI and access to an Astropods account and AI Gateway.
-- A PayPal Developer account with a Sandbox Business account and a separate Sandbox Personal (buyer) account.
-- Cloudflare Tunnel (`cloudflared`) or another HTTPS tunnel for PayPal webhook testing.
-
-Once both environment files are configured, follow the numbered instructions under **Run SignPay locally** below. Those steps cover installing dependencies, starting the agent and application, configuring the PayPal Sandbox webhook and testing a payment.
+For the complete installation, configuration, webhook and test instructions, go to [Run SignPay locally](#run-signpay-locally).
 
 ---
 
@@ -157,7 +101,7 @@ signpay/
 └── README.md
 ```
 
-The agent also has its own `signpay-agent/.env.example` template and README. Local databases, environment files and credentials are excluded from source control.
+The agent has its own README. The blank root `.env.local` is included as a convenience for judges; do not commit real credentials or overwrite the committed file with populated secrets. Local databases are excluded from source control.
 
 ---
 
@@ -199,9 +143,9 @@ Open the empty `.env.local` file already included in the repository. Use `.env.e
 | `PAYPAL_BUSINESS_EMAIL` | Email address of your PayPal Sandbox Business account. |
 | `PAYPAL_WEBHOOK_ID` | ID of the Sandbox webhook created in step 6. |
 | `SIGNPAY_AGENT_URL` | Local URL exposed by the running agent. The current local setup uses `http://localhost:3200`. |
-| `SIGNPAY_AGENT_API_KEY` | A random shared secret of at least 32 characters. It must match the value in `signpay-agent/.env` and the Astropods agent secret. |
+| `SIGNPAY_AGENT_API_KEY` | A random shared secret of at least 32 characters. It must match the value configured in the Astropods project settings using `ast project configure`. |
 
-Do not commit `.env.local` or share its credentials. The committed `.env.example` contains placeholders only.
+Do not commit real credentials or share them. The committed `.env.example` contains placeholders only. Keep the tracked `.env.local` blank in Git.
 
 ## 4. Configure the AI assessment agent
 
