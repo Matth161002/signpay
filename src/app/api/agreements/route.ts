@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Please sign in to access agreements." }, { status: 401 });
 
     const id = request.nextUrl.searchParams.get("id");
-    if (!id) return NextResponse.json({ agreements: getAgreementsForUser(user.id) });
+    if (!id) return NextResponse.json({ agreements: await getAgreementsForUser(user.id) });
 
-    const agreement = getAgreement(id);
+    const agreement = await getAgreement(id);
     if (!agreement) return NextResponse.json({ error: "Agreement not found." }, { status: 404 });
     if (agreement.providerUserId !== user.id && agreement.customerUserId !== user.id) {
       return NextResponse.json({ error: "You do not have access to this agreement." }, { status: 403 });
     }
-    return NextResponse.json({ agreement, paymentRequest: getLatestPaymentRequest(id) });
+    return NextResponse.json({ agreement, paymentRequest: await getLatestPaymentRequest(id) });
   } catch (error) {
     console.error("Agreement retrieval failed:", error);
     return NextResponse.json({ error: "Unable to retrieve agreement." }, { status: 500 });
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Please provide valid agreement details and the other party's username." }, { status: 400 });
       }
 
-      const other = getUserByUsername(counterpartyUsername.trim().toLowerCase());
+      const other = await getUserByUsername(counterpartyUsername.trim().toLowerCase());
       if (!other) return NextResponse.json({ error: "No account was found for that username. Ask the other party to register first." }, { status: 404 });
       if (other.id === user.id) return NextResponse.json({ error: "An agreement must involve two different accounts." }, { status: 400 });
 
@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
         signatures: { provider: null, customer: null },
         status: "awaiting_signatures", integrityHash: null,
       };
-      createAgreement(agreement);
-      appendAuditEvent(agreement.id, "agreement_created", "system", {
+      await createAgreement(agreement);
+      await appendAuditEvent(agreement.id, "agreement_created", "system", {
         service: agreement.service, agreedAmount: agreement.amount,
         providerUserId, customerUserId, createdByUserId: user.id,
       });
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
           !signature.startsWith("data:image/png;base64,") || signature.length > 500000) {
         return NextResponse.json({ error: "Invalid signature information." }, { status: 400 });
       }
-      const agreement = getAgreement(id);
+      const agreement = await getAgreement(id);
       if (!agreement) return NextResponse.json({ error: "Agreement not found." }, { status: 404 });
 
       const role = agreement.providerUserId === user.id ? "provider"
@@ -88,16 +88,16 @@ export async function POST(request: NextRequest) {
 
       const signedAt = new Date().toISOString();
       agreement.signatures[role] = { signature, signedAt };
-      saveAgreement(agreement);
-      appendAuditEvent(agreement.id, role === "provider" ? "provider_signed" : "customer_signed", role, {
+      await saveAgreement(agreement);
+      await appendAuditEvent(agreement.id, role === "provider" ? "provider_signed" : "customer_signed", role, {
         signedAt, authenticatedUserId: user.id,
       });
 
       if (agreement.signatures.provider && agreement.signatures.customer) {
         agreement.status = "active";
         agreement.integrityHash = generateIntegrityHash(agreement);
-        saveAgreement(agreement);
-        appendAuditEvent(agreement.id, "agreement_activated", "system", {
+        await saveAgreement(agreement);
+        await appendAuditEvent(agreement.id, "agreement_activated", "system", {
           integrityHash: agreement.integrityHash,
         });
       }
