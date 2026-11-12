@@ -3,8 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { appendAuditEvent, createPaymentRequest, ensureDatabaseReady, generateIntegrityHash, getAgreement, getLatestPaymentRequest, saveInitialAssessment } from "@/lib/database";
 import { getCurrentUser } from "@/lib/auth";
 
-function isAssessment(value: any): boolean {
-  return !!value && ["PROCEED","DISCREPANCY_IDENTIFIED","HUMAN_REVIEW_REQUIRED"].includes(value.outcome) && typeof value.explanation === "string" && Array.isArray(value.requirementsConsidered) && Array.isArray(value.discrepancies);
+type AssessmentResponse = {
+  outcome: "PROCEED" | "DISCREPANCY_IDENTIFIED" | "HUMAN_REVIEW_REQUIRED";
+  explanation: string;
+  requirementsConsidered: string[];
+  discrepancies: string[];
+  assessedAt?: string;
+  escalationReason?: string | null;
+};
+
+function isAssessment(value: unknown): value is AssessmentResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return ["PROCEED", "DISCREPANCY_IDENTIFIED", "HUMAN_REVIEW_REQUIRED"].includes(String(candidate.outcome)) &&
+    typeof candidate.explanation === "string" &&
+    Array.isArray(candidate.requirementsConsidered) && candidate.requirementsConsidered.every(item => typeof item === "string") &&
+    Array.isArray(candidate.discrepancies) && candidate.discrepancies.every(item => typeof item === "string");
 }
 
 async function assessInitial(input: { agreementId:string; service:string; description:string; requirements:string; amount:number; requestedAmount:number; completionStatement:string }) {
@@ -13,7 +27,7 @@ async function assessInitial(input: { agreementId:string; service:string; descri
   const agentUrl=(process.env.SIGNPAY_AGENT_URL ?? "http://localhost:3200").replace(/\/+$/, "");
   const response=await fetch(`${agentUrl}/api/assess`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${apiKey}`},body:JSON.stringify({agreementReference:input.agreementId,service:input.service,agreedWork:input.description,requirements:input.requirements.trim()||"No additional specific requirements were recorded.",agreedAmount:input.amount,requestedAmount:input.requestedAmount,completionStatement:input.completionStatement,customerObjection:null}),signal:AbortSignal.timeout(60000),cache:"no-store"});
   const data=await response.json().catch(()=>null);
-  if(!response.ok || !isAssessment(data)) throw new Error(data?.error ?? "The assessment service returned an invalid result.");
+  if(!response.ok || !isAssessment(data)) throw new Error((typeof data === "object" && data !== null && "error" in data && typeof data.error === "string" ? data.error : "The assessment service returned an invalid result."));
   return {agreementReference:input.agreementId,assessedAt:typeof data.assessedAt==="string"?data.assessedAt:new Date().toISOString(),outcome:data.outcome,explanation:data.explanation,requirementsConsidered:data.requirementsConsidered,discrepancies:data.discrepancies,escalationReason:typeof data.escalationReason==="string"?data.escalationReason:null};
 }
 
