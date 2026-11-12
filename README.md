@@ -94,6 +94,21 @@ signpay/
 
 Local databases, agreement data, environment files and credentials are excluded from source control. The agent has its own README with further configuration and development information.
 
+## Hosted demonstration deployment
+
+The deployment branch includes a Render Blueprint in `render.yaml`. It creates the Next.js web service on Render's free web-service plan and uses Neon PostgreSQL for persistent application data.
+
+1. In Render, create a new **Blueprint** and connect this repository.
+2. Select the `deployment/neon-postgres` branch.
+3. When prompted, enter the Neon pooled connection string as `DATABASE_URL`. Do not place it in source control.
+4. Add the PayPal Sandbox credentials and webhook ID.
+5. Set `SIGNPAY_AGENT_URL` to the deployed Astropods agent endpoint and set `SIGNPAY_AGENT_API_KEY` to the same secret configured for that agent.
+6. Deploy and check `/api/health`. It should return a successful database connection status.
+
+The Render service is configured for free hosting. Free services may sleep when idle, so the first request after inactivity can take longer. Neon Free may also suspend compute after its free allowance is exhausted. Check both providers' current limits before the judging window.
+
+The hosted database starts with a fresh schema. Existing data held only in a local SQLite database is not automatically copied to Neon. Create fresh demonstration accounts and agreements after deployment unless a separate data export and import is completed.
+
 ## Running locally
 
 ### Requirements
