@@ -22,21 +22,21 @@ The screenshots below show one complete test transaction in chronological order.
 
 ![Provider entering their signature in the signature area](docs/screenshots/03-provider-signature-entry.png)
 
-### 4. Provider signature recorded
+### 4. Both participants have signed and the agreement is active
 
-![Provider signature recorded while the customer signature is pending](docs/screenshots/04-provider-signature-recorded.png)
+![Both participant signatures recorded, with the agreement integrity hash displayed](docs/screenshots/04-provider-signature-recorded.png)
 
-### 5. Both participants have signed
+### 5. Provider prepares the payment request
 
-![Active agreement showing both participant signatures](docs/screenshots/05-agreement-active.png)
+![The provider's payment request form, including the completion statement and requested amount](docs/screenshots/05-agreement-active.png)
 
-### 6. Provider submits a payment request
+### 6. Payment request submitted to the customer
 
-![Provider submits the completion statement and requested payment amount](docs/screenshots/06-submit-payment-request.png)
+![The submitted payment request is awaiting the customer's response](docs/screenshots/06-submit-payment-request.png)
 
-### 7. Payment request sent to the customer
+### 7. Payment request confirmation
 
-![Payment request awaiting the customer's response](docs/screenshots/07-payment-request-sent.png)
+![Confirmation that the payment request has been sent to the customer](docs/screenshots/07-payment-request-sent.png)
 
 ### 8. AI assessment and PayPal invoice
 
