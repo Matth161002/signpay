@@ -20,17 +20,17 @@ export async function POST(request: NextRequest) {
     if (password.length < 12 || password.length > 128) {
       return NextResponse.json({ error: "Password must be at least 12 characters and no more than 128 characters." }, { status: 400 });
     }
-    if (getUserByUsername(username)) {
+    if (await getUserByUsername(username)) {
       return NextResponse.json({ error: "That username is already registered." }, { status: 409 });
     }
 
     const userId = randomUUID();
-    createUser({
+    await createUser({
       id: userId, username, displayName,
       passwordHash: await hashPassword(password),
       createdAt: new Date().toISOString(),
     });
-    const token = createLoginSession(userId);
+    const token = await createLoginSession(userId);
     await setSessionCookie(token);
     return NextResponse.json({ user: { id: userId, username, displayName } }, { status: 201 });
   } catch (error) {
