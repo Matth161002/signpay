@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid customer response." }, { status: 400 });
     }
 
-    const paymentRequest = getPaymentRequest(requestId);
+    const paymentRequest = await getPaymentRequest(requestId);
     if (!paymentRequest) return NextResponse.json({ error: "Payment request not found." }, { status: 404 });
-    const agreement = getAgreement(paymentRequest.agreementId);
+    const agreement = await getAgreement(paymentRequest.agreementId);
     if (!agreement) return NextResponse.json({ error: "Agreement not found." }, { status: 404 });
     if (agreement.customerUserId !== user.id) {
       return NextResponse.json({ error: "Only the authenticated customer can respond to this payment request." }, { status: 403 });
@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
 
     const agentData = await agentResponse.json().catch(() => null);
     if (!agentResponse.ok) {
-      completePaymentRequest(paymentRequest.id, objection, "failed", null);
-      appendAuditEvent(agreement.id, "assessment_failed", "system", {
+      await completePaymentRequest(paymentRequest.id, objection, "failed", null);
+      await appendAuditEvent(agreement.id, "assessment_failed", "system", {
         requestId: paymentRequest.id, reason: "assessment_service_error", httpStatus: agentResponse.status,
       });
       return NextResponse.json({
@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
         typeof agentData.explanation !== "string" ||
         !Array.isArray(agentData.requirementsConsidered) ||
         !Array.isArray(agentData.discrepancies)) {
-      completePaymentRequest(paymentRequest.id, objection, "failed", null);
-      appendAuditEvent(agreement.id, "assessment_failed", "system", {
+      await completePaymentRequest(paymentRequest.id, objection, "failed", null);
+      await appendAuditEvent(agreement.id, "assessment_failed", "system", {
         requestId: paymentRequest.id, reason: "invalid_assessment_response",
       });
       return NextResponse.json({ error: "The assessment service returned an invalid result.", outcome: "HUMAN_REVIEW_REQUIRED" }, { status: 502 });
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       discrepancies: agentData.discrepancies,
       escalationReason: typeof agentData.escalationReason === "string" ? agentData.escalationReason : null,
     };
-    completePaymentRequest(paymentRequest.id, objection, "completed", assessment);
+    await completePaymentRequest(paymentRequest.id, objection, "completed", assessment);
 
     let invoiceResult: { invoiceId: string; invoiceUrl: string | null; status: string } | null = null;
     if (agentData.outcome === "PROCEED") {
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
           amount: paymentRequest.requestedAmount,
         });
         invoiceResult = createdInvoice;
-        updatePayPalInvoice(paymentRequest.id, {
+        await updatePayPalInvoice(paymentRequest.id, {
           recipientEmail: paypalEmail.trim(),
           invoiceId: createdInvoice.invoiceId,
           invoiceUrl: createdInvoice.invoiceUrl,
@@ -122,23 +122,23 @@ export async function POST(request: NextRequest) {
         });
       } catch (invoiceError) {
         const message = invoiceError instanceof Error ? invoiceError.message : "PayPal invoice creation failed.";
-        updatePayPalInvoice(paymentRequest.id, {
+        await updatePayPalInvoice(paymentRequest.id, {
           recipientEmail: paypalEmail.trim(), invoiceId: null, invoiceUrl: null,
           invoiceStatus: "FAILED", error: message,
         });
-        appendAuditEvent(agreement.id, "assessment_failed", "system", {
+        await appendAuditEvent(agreement.id, "assessment_failed", "system", {
           requestId: paymentRequest.id, reason: message,
         });
         console.error("PayPal invoice creation failed after PROCEED assessment:", invoiceError);
       }
     } else {
-      updatePayPalInvoice(paymentRequest.id, {
+      await updatePayPalInvoice(paymentRequest.id, {
         recipientEmail: paypalEmail.trim(), invoiceId: null, invoiceUrl: null,
         invoiceStatus: "NOT_CREATED", error: null,
       });
     }
 
-    appendAuditEvent(agreement.id, "assessment_completed", "system", {
+    await appendAuditEvent(agreement.id, "assessment_completed", "system", {
       requestId: paymentRequest.id, outcome: agentData.outcome, assessedAt,
       submittedByCustomerUserId: user.id,
     });
@@ -146,8 +146,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (auditAgreementId && auditRequestId) {
       try {
-        completePaymentRequest(auditRequestId, null, "failed", null);
-        appendAuditEvent(auditAgreementId, "assessment_failed", "system", {
+        await completePaymentRequest(auditRequestId, null, "failed", null);
+        await appendAuditEvent(auditAgreementId, "assessment_failed", "system", {
           requestId: auditRequestId, reason: "assessment_processing_error",
         });
       } catch (auditError) {
