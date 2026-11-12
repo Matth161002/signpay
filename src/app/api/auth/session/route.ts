@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, connection } from "next/server";
 import { ensureDatabaseReady } from "@/lib/database";
 import { getCurrentUser } from "@/lib/auth";
 
-export const dynamic = "force-dynamic";
-
 export async function GET() {
+  await connection();
+
   try {
     await ensureDatabaseReady();
     return NextResponse.json({ user: await getCurrentUser() });
