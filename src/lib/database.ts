@@ -21,17 +21,19 @@ export type PaymentRequest = {
 export type AuditEventType = "agreement_created"|"provider_signed"|"customer_signed"|"agreement_activated"|"assessment_submitted"|"assessment_completed"|"assessment_failed"|"initial_assessment_passed"|"initial_assessment_stopped"|"customer_assessment_completed";
 export type AuditEvent = {id:string;agreementId:string;eventType:AuditEventType;occurredAt:string;actorRole:"provider"|"customer"|"system"|null;details:Record<string,unknown>};
 
-type Row = Record<string, any>;
+type Row = Record<string, unknown>;
+type LegacyAgreement = Pick<Agreement, "id" | "provider" | "customer" | "service" | "description" | "requirements" | "amount" | "createdAt" | "signatures" | "status" | "integrityHash">;
+const field = <T,>(row: Row, key: string): T => row[key] as T;
 const globalDb = globalThis as typeof globalThis & { signPayPool?:Pool; signPayReady?:Promise<void> };
 function pool():Pool {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");
   if (!globalDb.signPayPool) globalDb.signPayPool = new Pool({connectionString:process.env.DATABASE_URL,max:5,idleTimeoutMillis:10000,connectionTimeoutMillis:10000});
   return globalDb.signPayPool;
 }
-const mapUser=(r:Row):UserRecord=>({id:r.id,username:r.username,displayName:r.display_name,passwordHash:r.password_hash,createdAt:r.created_at});
-const mapPublicUser=(r:Row):PublicUser=>({id:r.id,username:r.username,displayName:r.display_name});
-const mapAgreement=(r:Row):Agreement=>({id:r.id,provider:r.provider,customer:r.customer,providerUserId:r.provider_user_id,customerUserId:r.customer_user_id,service:r.service,description:r.description,requirements:r.requirements,amount:Number(r.amount),createdAt:r.created_at,signatures:JSON.parse(r.signatures_json),status:r.status,integrityHash:r.integrity_hash});
-const mapPayment=(r:Row):PaymentRequest=>({id:r.id,agreementId:r.agreement_id,providerUserId:r.provider_user_id,completionStatement:r.completion_statement,requestedAmount:Number(r.requested_amount),customerObjection:r.customer_objection,status:r.status,initialAssessmentJson:r.initial_assessment_json,assessmentJson:r.assessment_json,paypalRecipientEmail:r.paypal_recipient_email,paypalInvoiceId:r.paypal_invoice_id,paypalInvoiceUrl:r.paypal_invoice_url,paypalInvoiceStatus:r.paypal_invoice_status,paypalError:r.paypal_error,createdAt:r.created_at,updatedAt:r.updated_at});
+const mapUser=(r:Row):UserRecord=>({id:field<string>(r,"id"),username:field<string>(r,"username"),displayName:field<string>(r,"display_name"),passwordHash:field<string>(r,"password_hash"),createdAt:field<string>(r,"created_at")});
+const mapPublicUser=(r:Row):PublicUser=>({id:field<string>(r,"id"),username:field<string>(r,"username"),displayName:field<string>(r,"display_name")});
+const mapAgreement=(r:Row):Agreement=>({id:field<string>(r,"id"),provider:field<string>(r,"provider"),customer:field<string>(r,"customer"),providerUserId:field<string|null>(r,"provider_user_id"),customerUserId:field<string|null>(r,"customer_user_id"),service:field<string>(r,"service"),description:field<string>(r,"description"),requirements:field<string>(r,"requirements"),amount:Number(field<number|string>(r,"amount")),createdAt:field<string>(r,"created_at"),signatures:JSON.parse(field<string>(r,"signatures_json")),status:field<Agreement["status"]>(r,"status"),integrityHash:field<string|null>(r,"integrity_hash")});
+const mapPayment=(r:Row):PaymentRequest=>({id:field<string>(r,"id"),agreementId:field<string>(r,"agreement_id"),providerUserId:field<string>(r,"provider_user_id"),completionStatement:field<string>(r,"completion_statement"),requestedAmount:Number(field<number|string>(r,"requested_amount")),customerObjection:field<string|null>(r,"customer_objection"),status:field<PaymentRequest["status"]>(r,"status"),initialAssessmentJson:field<string|null>(r,"initial_assessment_json"),assessmentJson:field<string|null>(r,"assessment_json"),paypalRecipientEmail:field<string|null>(r,"paypal_recipient_email"),paypalInvoiceId:field<string|null>(r,"paypal_invoice_id"),paypalInvoiceUrl:field<string|null>(r,"paypal_invoice_url"),paypalInvoiceStatus:field<string|null>(r,"paypal_invoice_status"),paypalError:field<string|null>(r,"paypal_error"),createdAt:field<string>(r,"created_at"),updatedAt:field<string>(r,"updated_at")});
 
 export async function ensureDatabaseReady():Promise<void>{
   if(!globalDb.signPayReady){
@@ -51,8 +53,8 @@ export async function ensureDatabaseReady():Promise<void>{
       CREATE INDEX IF NOT EXISTS idx_paypal_webhook_invoice ON paypal_webhook_events(invoice_id,received_at);`);
       const migration=await p.query("SELECT name FROM schema_migrations WHERE name=$1",["import-agreements-json-v1"]);
       if(migration.rowCount===0){
-        let legacy:Row[]=[];
-        try{const parsed:unknown=JSON.parse(await readFile(path.join(process.cwd(),"data","agreements.json"),"utf8"));if(!Array.isArray(parsed))throw new Error("Existing agreements file has an invalid format.");legacy=parsed as Row[];}
+        let legacy:LegacyAgreement[]=[];
+        try{const parsed:unknown=JSON.parse(await readFile(path.join(process.cwd(),"data","agreements.json"),"utf8"));if(!Array.isArray(parsed))throw new Error("Existing agreements file has an invalid format.");legacy=parsed as LegacyAgreement[];}
         catch(e){if((e as NodeJS.ErrnoException).code!=="ENOENT")throw e;}
         const client=await p.connect();
         try{
