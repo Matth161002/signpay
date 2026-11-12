@@ -193,7 +193,7 @@ export default function AgreementPage() {
 
   async function respondToPaymentRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!paymentRequest || !agreement) return;
-    setAssessmentLoading(true); setError(""); setAssessment(null);
+    setAssessmentLoading(true); setError("");
     try {
       const response = await fetch("/api/assessments", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -201,7 +201,6 @@ export default function AgreementPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to assess this payment request.");
-      setAssessment(data.assessment);
       await refreshAgreement(agreement.id);
       setNotice("The assessment has been completed and recorded.");
     } catch (err) {
