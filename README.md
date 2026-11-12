@@ -8,34 +8,49 @@ The assessment is text-based. The provider submits a written completion statemen
 
 ## Demonstration
 
-The screenshots below show the main stages of a completed SignPay transaction, from agreement signing through AI assessment to PayPal payment confirmation.
+The screenshots below document one complete test transaction in chronological order, from creating the agreement to PayPal confirming payment. Some screenshots show successive states of the same agreement.
 
-### 1. Both participants sign the agreement
+### 1. Create the agreement
 
-![SignPay agreement review showing both participants' signatures](docs/screenshots/01-agreement-signed.jpg)
+![Creating the piano lesson agreement](docs/screenshots/01-create-agreement.png)
 
-### 2. SignPay assesses the completion statement
+### 2. Agreement created, awaiting signatures
 
-![SignPay assessment result showing PROCEED](docs/screenshots/02-ai-assessment.jpg)
+![Agreement review with both signature records awaiting signatures](docs/screenshots/02-agreement-awaiting-signatures.png)
 
-### 3. PayPal confirms the invoice has been paid
+### 3. Provider signature recorded
 
-![SignPay completed agreement with PayPal payment confirmation](docs/screenshots/03-payment-confirmed.jpg)
+![Provider signature recorded while the customer signature is pending](docs/screenshots/03-provider-signed.png)
 
-### 4. PayPal delivers the payment webhook
+### 4. Both participants have signed
 
-![PayPal Sandbox webhook event showing successful delivery](docs/screenshots/04-paypal-webhook.jpg)
+![Active agreement showing both participant signatures](docs/screenshots/04-agreement-active.png)
 
-These screenshots are from a successful PayPal Sandbox test. They demonstrate the recorded application state and webhook delivery; they are not evidence that the AI independently verified the physical work.
+### 5. Provider submits a payment request
 
-## For judges
+![Provider submits the completion statement and requested payment amount](docs/screenshots/05-submit-payment-request.png)
 
-The repository includes an empty `.env.local` in the correct location. Use the adjacent `.env.example` as the template and enter your own PayPal Sandbox credentials and SignPay settings.
+### 6. Payment request sent to the customer
 
-The AI agent is configured through Astropods. **You do not need a `signpay-agent/.env` file.** From the `signpay-agent` directory, run `ast project configure` and set `SIGNPAY_AGENT_API_KEY` to the same random secret used in the main application's `.env.local`. Astropods supplies the AI Gateway development credentials when the agent starts.
+![Payment request awaiting the customer's response](docs/screenshots/06-payment-request-sent.png)
 
-For the complete installation, configuration, webhook and test instructions, go to [Run SignPay locally](#run-signpay-locally).
----
+### 7. AI assessment and PayPal invoice
+
+![PROCEED assessment and PayPal invoice creation](docs/screenshots/07-ai-assessment-invoice.png)
+
+### 8. PayPal confirms payment
+
+![PayPal payment successful confirmation screen](docs/screenshots/08-paypal-payment-successful.png)
+
+### 9. Completed agreement in the agreements list
+
+![My agreements list showing the completed piano lesson agreement](docs/screenshots/09-agreements-list-completed.png)
+
+### 10. Final completed agreement record
+
+![Completed agreement with AI assessment and PayPal payment confirmation](docs/screenshots/10-agreement-completed.png)
+
+These screenshots are from a successful PayPal Sandbox test. The AI assessment is based on information submitted by the participants. It does not independently verify that the physical work took place.
 
 ## How it works
 
