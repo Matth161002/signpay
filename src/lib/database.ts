@@ -60,7 +60,10 @@ export type AuditEventType =
   | "agreement_activated"
   | "assessment_submitted"
   | "assessment_completed"
-  | "assessment_failed";
+  | "assessment_failed"
+  | "initial_assessment_passed"
+  | "initial_assessment_stopped"
+  | "customer_assessment_completed";
 
 export type AuditEvent = {
   id: string;
