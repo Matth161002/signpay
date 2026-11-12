@@ -34,7 +34,7 @@ The requested payment amount is checked deterministically against the amount in 
 ### Main application
 
 - **Next.js and TypeScript** for the web application and server-side routes.
-- **SQLite** for application data, including users, sessions, agreements, payment requests and audit events.
+- **Neon PostgreSQL** for persistent application data, including users, sessions, agreements, payment requests and audit events.
 - **Password hashing and session controls** for account authentication and access to participant agreements.
 - **SHA-256** to calculate an agreement integrity hash after both parties have signed.
 
@@ -125,6 +125,10 @@ cp .env.example .env.local
 ```
 
 Set the following values in `.env.local`:
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Pooled PostgreSQL connection string copied from your Neon project. Keep it private. |
 
 | Variable | Purpose |
 |---|---|
