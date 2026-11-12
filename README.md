@@ -8,21 +8,27 @@ The assessment is text-based. The provider submits a written completion statemen
 
 ## Judge setup: start here
 
-An empty `.env.local` is already included in the repository, in the correct location beside the root `package.json`. Open that file and use the `.env.example` immediately beside it as your guide. Copy the required variable names into `.env.local` and enter your own credentials.
+An empty `.env.local` is already included in the repository, beside the root `package.json`. Open it and use the `.env.example` beside it as your guide. Enter your PayPal Sandbox credentials, the agent URL and a random `SIGNPAY_AGENT_API_KEY` of at least 32 characters.
 
-You only need to create the AI agent's environment file. From the repository root, run:
+**You do not need to create a second environment file for the AI agent when using Astropods.** Astropods supplies the AI Gateway development credentials automatically. You only need to configure the shared SignPay key once in the agent's local Astropods project settings.
 
-**Windows PowerShell**
+From a second terminal, run these commands from the repository root:
+
 ```powershell
-Copy-Item signpay-agent/.env.example signpay-agent/.env
+Set-Location signpay-agent
+ast login
+ast project configure
 ```
 
-**macOS / Linux**
-```bash
-cp signpay-agent/.env.example signpay-agent/.env
+When prompted, enter the value for `SIGNPAY_AGENT_API_KEY`. It must be exactly the same value you entered in the root `.env.local`. Astropods stores this value locally and supplies it to the agent when it starts.
+
+Then start the agent from that same `signpay-agent` directory:
+
+```powershell
+ast project start
 ```
 
-This creates `signpay/signpay-agent/.env` beside the agent's example file.
+Keep this terminal running. The main application's `SIGNPAY_AGENT_URL` must point to the local agent URL used by this setup.
 
 ### Main application: `.env.local`
 
@@ -199,40 +205,26 @@ Do not commit `.env.local` or share its credentials. The committed `.env.example
 
 ## 4. Configure the AI assessment agent
 
-Open a second terminal at the repository root.
-
-**Windows PowerShell:**
+Open a second terminal and enter the agent directory:
 
 ```powershell
-Copy-Item signpay-agent/.env.example signpay-agent/.env
 Set-Location signpay-agent
 ```
 
-**macOS / Linux:**
-
-```bash
-cp signpay-agent/.env.example signpay-agent/.env
-cd signpay-agent
-```
-
-Edit `signpay-agent/.env` and set:
-
-| Variable | Value |
-|---|---|
-| `ASTRO_GATEWAY_URL` | Your Astropods AI Gateway endpoint. |
-| `ASTRO_GATEWAY_API_KEY` | Your Astropods AI Gateway API key, if required by your account configuration. |
-| `SIGNPAY_AGENT_API_KEY` | The exact same random secret used for `SIGNPAY_AGENT_API_KEY` in the root `.env.local`. |
-
-Install the agent dependencies:
-
-```bash
-bun install
-```
-
-Authenticate and start the agent using Astropods:
+Configure the agent's required secret:
 
 ```bash
 ast login
+ast project configure
+```
+
+When prompted, set `SIGNPAY_AGENT_API_KEY` to exactly the same random secret used in the root `.env.local`. Astropods stores this value in the local project configuration. You do not need to create `signpay-agent/.env` for this Astropods workflow.
+
+Astropods automatically provides the AI Gateway development credentials when the agent starts. You do not need to supply `ASTRO_GATEWAY_URL` or `ASTRO_GATEWAY_API_KEY` yourself.
+
+Start the agent:
+
+```bash
 ast project start
 ```
 
