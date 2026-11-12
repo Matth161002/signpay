@@ -74,6 +74,11 @@ export type AuditEvent = {
   details: Record<string, unknown>;
 };
 
+type LegacyAgreement = Pick<Agreement,
+  "id" | "provider" | "customer" | "service" | "description" | "requirements" |
+  "amount" | "createdAt" | "signatures" | "status" | "integrityHash"
+>;
+
 type AgreementRow = {
   id: string; provider: string; customer: string;
   provider_user_id: string | null; customer_user_id: string | null;
@@ -280,11 +285,11 @@ export async function ensureDatabaseReady(): Promise<void> {
       const migration = db.prepare("SELECT name FROM schema_migrations WHERE name = ?")
         .get("import-agreements-json-v1") as { name: string } | undefined;
       if (!migration) {
-        let legacy: Array<Record<string, unknown>> = [];
+        let legacy: LegacyAgreement[] = [];
         try {
           const parsed: unknown = JSON.parse(await readFile(legacyDataPath, "utf8"));
           if (!Array.isArray(parsed)) throw new Error("The existing agreements file has an invalid format.");
-          legacy = parsed as Array<Record<string, unknown>>;
+          legacy = parsed as LegacyAgreement[];
         } catch (error) {
           if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
         }
