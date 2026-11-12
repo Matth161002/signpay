@@ -92,11 +92,20 @@ The separate `signpay-agent/` service uses:
 
 - **Bun** as the JavaScript runtime.
 - **Mastra** as the agent framework.
-- **Astropods AI Gateway** for model access.
+- **Astropods AI Gateway** for hosted model access.
 - **Claude Sonnet 4.6** as the configured default model.
+- **`@astropods/adapter-mastra`** to expose the Mastra agent through the Astropods runtime.
 - **Zod** for input and structured output validation.
 
-The agent exposes an authenticated HTTP assessment endpoint to the main application. It assesses consistency with the agreement; it does not verify physical completion or move money.
+### Astropods sponsor integration
+
+Astropods is integrated into the AI service itself, rather than being used only as a development or deployment tool. The agent's `astropods.yml` configuration declares the default model provider as `gateway` and selects `claude-sonnet-4-6`. When the project runs through the Astropods CLI, Astropods supplies the AI Gateway URL and API key to the agent as `ASTRO_GATEWAY_URL` and `ASTRO_GATEWAY_API_KEY`.
+
+In `signpay-agent/agent/index.ts`, the agent reads those runtime credentials and configures the OpenAI-compatible client with the Astropods Gateway endpoint. Mastra then calls Claude Sonnet 4.6 through that client when it generates the structured assessment. The `@astropods/adapter-mastra` package connects the Mastra agent to the Astropods runtime. This means the model inference used for SignPay's payment-request assessment is routed through Astropods AI Gateway; the project does not call the model provider directly.
+
+The main Next.js application communicates with the agent through its authenticated HTTP assessment endpoint. Astropods also manages the agent's local project configuration and supplies the Gateway development credentials when the agent is started with `ast project start`.
+
+The agent assesses consistency with the agreement; it does not verify physical completion or move money.
 
 ### PayPal
 
