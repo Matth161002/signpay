@@ -31,10 +31,10 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return expected.length === derived.length && timingSafeEqual(expected, derived);
 }
 
-export function createLoginSession(userId: string): string {
+export function await createLoginSession(userId: string): string {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
-  createSession(hashSessionToken(token), userId, expiresAt);
+  await createSession(hashSessionToken(token), userId, expiresAt);
   return token;
 }
 
@@ -52,7 +52,7 @@ export async function setSessionCookie(token: string): Promise<void> {
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
-  if (token) deleteSession(hashSessionToken(token));
+  if (token) await deleteSession(hashSessionToken(token));
   store.set(SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -66,6 +66,6 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const userId = getSessionUserId(hashSessionToken(token));
-  return userId ? getUserById(userId) : null;
+  const userId = await getSessionUserId(hashSessionToken(token));
+  return userId ? await getUserById(userId) : null;
 }
