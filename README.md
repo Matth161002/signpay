@@ -2,24 +2,22 @@
 
 **AI-assisted assessment of service payment requests against digitally signed agreements, with PayPal invoice and payment integration.**
 
-SignPay is a prototype developed for the PayPal AI Hackathon. It is designed to help service providers and customers assess whether a payment request is consistent with the work and payment terms they agreed.
+SignPay is a prototype developed for the PayPal AI Hackathon. It helps service providers and customers assess whether a payment request is consistent with the work and payment terms in their signed agreement.
 
-SignPay's assessment process is text-based. The provider submits a written completion statement, and the customer may submit a written objection at a later stage. The AI compares this information with the original agreement. It does not verify physical work or analyse photographs.
+The assessment is text-based. The provider submits a written completion statement and the customer may submit a written objection. The AI compares those statements with the original agreement. It does not verify physical work, analyse photographs or move money.
 
 ## How it works
 
-1. **Create an agreement.** The provider and customer record the service, agreed work, requirements and payment amount.
-2. **Sign the agreement.** Both participants authenticate and provide a digital signature.
-3. **Provider requests payment.** The provider submits a payment request, including the requested amount and a written completion statement.
-4. **Initial AI assessment.** SignPay checks the requested amount against the agreed amount separately, then the AI assesses the provider's completion statement against the original agreement.
-5. **Customer objection.** Only after the provider's request has passed the initial AI assessment can the customer submit a written objection. The customer cannot object before a payment request has been submitted and accepted by the initial assessment.
-6. **Further assessment.** If an objection is submitted, the AI compares it with the original agreement and the provider's completion statement. A discrepancy or uncertainty is identified rather than silently disregarded.
-7. **Invoice and payment.** Where the assessment workflow permits it to proceed, the application creates and sends a PayPal invoice. PayPal processes the payment.
-8. **Payment confirmation.** SignPay uses a verified PayPal webhook to record the confirmed payment status.
+1. The provider and customer create an agreement recording the service, work, requirements and payment amount.
+2. Both participants authenticate and sign the agreement.
+3. The provider submits a payment request and written completion statement.
+4. SignPay checks the requested amount against the agreed amount. The AI separately assesses the completion statement against the agreement.
+5. After the initial assessment permits the request to proceed, the customer can submit a written objection.
+6. If an objection is submitted, the AI assesses it against the agreement and the provider's completion statement.
+7. Where the assessment workflow permits the request to proceed, SignPay creates and sends a PayPal invoice.
+8. PayPal processes the payment. SignPay verifies the PayPal webhook before recording the invoice as paid and marking the payment request completed.
 
 ## Assessment outcomes
-
-The assessment agent returns one of three structured outcomes:
 
 | Outcome | Meaning |
 | --- | --- |
@@ -27,20 +25,20 @@ The assessment agent returns one of three structured outcomes:
 | `DISCREPANCY_IDENTIFIED` | The submitted information conflicts with an agreed term or requirement. |
 | `HUMAN_REVIEW_REQUIRED` | The information is ambiguous, incomplete or insufficient for a reliable assessment. |
 
-The requested payment amount is checked deterministically against the amount in the agreement. The AI does not override this check.
+The requested payment amount is checked deterministically against the amount in the agreement. The AI cannot override this check.
 
 ## Architecture and technology
 
 ### Main application
 
 - **Next.js and TypeScript** for the web application and server-side routes.
-- **SQLite** for application data, including users, sessions, agreements, payment requests and audit events.
-- **Password hashing and session controls** for account authentication and access to participant agreements.
+- **SQLite** for users, sessions, agreements, payment requests and audit events. The database is created automatically at `data/signpay.sqlite` on first run.
+- **scrypt password hashing** and session controls for authentication.
 - **SHA-256** to calculate an agreement integrity hash after both parties have signed.
 
 ### AI assessment agent
 
-The separate `signpay-agent/` service is built with:
+The separate `signpay-agent/` service uses:
 
 - **Bun** as the JavaScript runtime.
 - **Mastra** as the agent framework.
@@ -52,34 +50,34 @@ The agent exposes an authenticated HTTP assessment endpoint to the main applicat
 
 ### PayPal
 
-SignPay integrates with the PayPal Invoicing API to create and send invoices. PayPal handles the payment itself. A PayPal webhook is verified before the application records an invoice as paid.
+SignPay uses the PayPal Invoicing API to create and send invoices. PayPal handles the payment itself. A verified PayPal webhook records the payment confirmation.
 
-The integration was exercised using PayPal Sandbox accounts. Sandbox transactions are test transactions and do not represent transfers of real money.
+The integration has been tested using PayPal Sandbox accounts. Sandbox transactions are test transactions and do not transfer real money.
 
 ## Security controls
 
-The prototype includes several security controls:
+The prototype includes:
 
-- Passwords are stored as salted scrypt hashes rather than plaintext.
-- Sessions use opaque random tokens, with token hashes stored in the database and an HTTP-only, SameSite cookie.
-- Agreement access is restricted to the authenticated participants.
-- Server-side role and participant checks prevent one participant from signing or submitting an objection on behalf of the other.
-- The customer objection is only available after the provider's payment request has passed the initial AI assessment.
-- The agent endpoint requires a shared API key and uses timing-safe comparison.
-- Agent input and structured output are validated using Zod.
-- User-supplied case descriptions are treated as untrusted data, not instructions that can change the agent's assessment rules.
-- Uncertain AI assessments fall back to human review.
-- PayPal webhook signatures are verified before payment status is updated.
+- Passwords stored as salted scrypt hashes, not plaintext.
+- Opaque random session tokens, with token hashes stored in the database and an HTTP-only, SameSite cookie.
+- Agreement access restricted to authenticated participants.
+- Server-side participant and role checks for signing and customer objections.
+- Customer objections enabled only after the provider's payment request passes the initial AI assessment.
+- Shared-key authentication between the application and the agent, using timing-safe comparison.
+- Zod validation of agent input and structured output.
+- User-supplied descriptions treated as untrusted data, not instructions that can change the agent's rules.
+- Human review when an AI assessment is uncertain.
+- PayPal webhook signature verification before payment status is updated.
 
-These controls are intended to demonstrate security principles in a prototype. They do not constitute an independent security audit or certification.
+These controls demonstrate security principles in a prototype. They do not constitute an independent security audit or certification.
 
-## Important limitations
+## Limitations
 
-- **Text-based assessment only.** The provider's completion statement and the customer's objection are written text. The prototype does not accept or analyse photographs or other visual evidence.
-- **AI does not prove that work happened.** It assesses the consistency of the submitted statements against the agreement.
-- **Human resolution remains necessary.** SignPay identifies uncertainty but does not provide a full dispute-resolution service.
-- **The AI does not move money.** PayPal handles invoicing and payment. SignPay records payment status from verified webhook notifications.
-- **The project is a hackathon prototype.** It has been tested using local services and PayPal Sandbox, not established as a production payment service.
+- **Text-based assessment:** the prototype does not accept or analyse photographs or other visual evidence.
+- **No physical verification:** the AI assesses consistency between submitted statements and the agreement. It cannot prove that work took place.
+- **Human resolution:** uncertain cases require the parties to resolve the matter outside the automated assessment.
+- **Payment processing:** PayPal, not the AI agent, handles invoicing and payment.
+- **Prototype status:** this is a hackathon demonstration, not a production payment service.
 
 ## Project structure
 
@@ -88,101 +86,173 @@ signpay/
 ├── src/                  # Next.js application and API routes
 ├── signpay-agent/        # AI assessment agent
 ├── public/               # Static application assets
+├── .env.example          # Main application environment template
 ├── package.json
 └── README.md
 ```
 
-Local databases, agreement data, environment files and credentials are excluded from source control. The agent has its own README with further configuration and development information.
+The agent also has its own `signpay-agent/.env.example` template and README. Local databases, environment files and credentials are excluded from source control.
 
-## Running locally
+---
 
-### Requirements
+# Run SignPay locally
 
-- Node.js 24.x and npm.
-- Bun.
-- Astropods CLI and an authenticated Astropods account.
-- PayPal Developer Sandbox application and Sandbox buyer account for testing invoice payments.
+These instructions are intended for a judge setting up a fresh copy of the repository. They use PayPal Sandbox and local development services. No production credentials are required.
 
-### 1. Clone the repository
+## Prerequisites
+
+Install:
+
+- **Node.js 24.x** and npm.
+- **Bun**.
+- **Astropods CLI**, with access to an Astropods account and AI Gateway.
+- **Cloudflare Tunnel** (`cloudflared`) or another HTTPS tunnel, so PayPal can reach the local webhook during payment testing.
+- A **PayPal Developer** account with a Sandbox Business account and a separate Sandbox Personal (buyer) account.
+
+## 1. Clone the repository
 
 ```bash
 git clone https://github.com/Matth161002/signpay.git
 cd signpay
 ```
 
-### 2. Install the main application dependencies
+## 2. Install the main application
 
 ```bash
 npm install
 ```
 
-### 3. Configure the main application
+## 3. Configure the main application
 
-Copy the example environment file to `.env.local` in the repository root:
+Copy the root example file to `.env.local`.
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+**macOS / Linux:**
 
 ```bash
 cp .env.example .env.local
 ```
 
-Set the following values in `.env.local`:
+Edit `.env.local` and provide the following values:
 
-| Variable | Purpose |
+| Variable | Value |
 |---|---|
-| `PAYPAL_CLIENT_ID` | Client ID from your PayPal Developer Sandbox application. |
+| `PAYPAL_CLIENT_ID` | Client ID from your PayPal Developer **Sandbox** application. |
 | `PAYPAL_CLIENT_SECRET` | Secret from the same Sandbox application. |
-| `PAYPAL_BUSINESS_EMAIL` | Email address of your PayPal Business Sandbox account. |
-| `PAYPAL_WEBHOOK_ID` | Webhook ID for the Sandbox webhook registered to receive invoice-paid events. |
-| `SIGNPAY_AGENT_URL` | URL at which the local AI agent can be reached. The application defaults to `http://localhost:3200`. |
-| `SIGNPAY_AGENT_API_KEY` | Shared secret used to authenticate requests between the application and agent. Use at least 32 characters. |
+| `PAYPAL_BUSINESS_EMAIL` | Email address of your PayPal Sandbox Business account. |
+| `PAYPAL_WEBHOOK_ID` | ID of the Sandbox webhook created in step 6. |
+| `SIGNPAY_AGENT_URL` | Local URL exposed by the running agent. The current local setup uses `http://localhost:3200`. |
+| `SIGNPAY_AGENT_API_KEY` | A random shared secret of at least 32 characters. It must match the value in `signpay-agent/.env` and the Astropods agent secret. |
 
-Use PayPal Sandbox credentials, not live credentials. The PayPal webhook must be reachable by PayPal during payment testing. For local testing, this requires a public HTTPS tunnel to the application's webhook route, `/api/paypal/webhook`. Register the resulting URL in the PayPal Developer Dashboard and use its webhook ID above.
+Do not commit `.env.local` or share its credentials. The committed `.env.example` contains placeholders only.
 
-### 4. Configure and start the AI agent
+## 4. Configure the AI assessment agent
 
-The agent has a separate environment file. From the repository root:
+Open a second terminal at the repository root.
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item signpay-agent/.env.example signpay-agent/.env
+Set-Location signpay-agent
+```
+
+**macOS / Linux:**
 
 ```bash
+cp signpay-agent/.env.example signpay-agent/.env
 cd signpay-agent
-cp .env.example .env
+```
+
+Edit `signpay-agent/.env` and set:
+
+| Variable | Value |
+|---|---|
+| `ASTRO_GATEWAY_URL` | Your Astropods AI Gateway endpoint. |
+| `ASTRO_GATEWAY_API_KEY` | Your Astropods AI Gateway API key, if required by your account configuration. |
+| `SIGNPAY_AGENT_API_KEY` | The exact same random secret used for `SIGNPAY_AGENT_API_KEY` in the root `.env.local`. |
+
+Install the agent dependencies:
+
+```bash
 bun install
 ```
 
-Set these values in `signpay-agent/.env`:
-
-| Variable | Purpose |
-|---|---|
-| `ASTRO_GATEWAY_URL` | Astropods AI Gateway endpoint. |
-| `ASTRO_GATEWAY_API_KEY` | Astropods AI Gateway API key. |
-| `SIGNPAY_AGENT_API_KEY` | The same shared secret configured in the main application's `.env.local`. |
-
-The agent uses the Astropods Gateway and the model configured in `astropods.yml`. Authenticate the Astropods CLI and start the project:
+Authenticate and start the agent using Astropods:
 
 ```bash
 ast login
 ast project start
 ```
 
-The agent listens on port `8080` within its service configuration. Astropods may expose it through a local development URL; set `SIGNPAY_AGENT_URL` in the main application's `.env.local` to the URL reported by the CLI. In the current local development setup this has been `http://localhost:3200`.
+Keep this terminal running. Use the local agent URL reported by the Astropods CLI as `SIGNPAY_AGENT_URL` in the root `.env.local`. In the tested local setup, the URL was `http://localhost:3200`. If the CLI reports a different URL, use that instead.
 
-For further agent-specific details, see [signpay-agent/README.md](signpay-agent/README.md).
+The agent configuration and additional details are in [signpay-agent/README.md](signpay-agent/README.md).
 
-### 5. Start the main application
+## 5. Start the main application
 
-Open a separate terminal at the repository root:
+Open a third terminal at the repository root, not inside `signpay-agent/`:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Keep this terminal running and open [http://localhost:3000](http://localhost:3000).
 
-### 6. PayPal Sandbox testing
+The SQLite database is created automatically in the root `data/` directory. No separate database server or database setup is required. The database is local to this copy of SignPay.
 
-Use a PayPal Sandbox buyer account to pay invoices sent to the customer email address. Configure a webhook endpoint reachable by PayPal and register its webhook identifier in `.env.local`. The application verifies webhook signatures before recording payment confirmation.
+## 6. Configure the PayPal Sandbox webhook
 
-Do not use live PayPal credentials for demonstration or testing.
+PayPal must be able to reach the local application's webhook endpoint. Start a Cloudflare Quick Tunnel in another terminal:
 
+```bash
+cloudflared tunnel --url http://localhost:3000
+```
+
+On Windows, if you downloaded the executable rather than installing it on your PATH, run it from its download folder, for example:
+
+```powershell
+.\cloudflared.exe tunnel --url http://localhost:3000
+```
+
+Cloudflare will display a temporary public HTTPS URL. In the PayPal Developer Dashboard:
+
+1. Open your Sandbox application and its webhook settings.
+2. Add a webhook using the HTTPS URL followed by `/api/paypal/webhook`.
+3. Subscribe to the `INVOICING.INVOICE.PAID` event.
+4. Save the webhook and copy its webhook ID into `PAYPAL_WEBHOOK_ID` in the root `.env.local`.
+
+If the Quick Tunnel is restarted, its public URL may change. Update the webhook URL in the PayPal Developer Dashboard and update `PAYPAL_WEBHOOK_ID` if you create a replacement webhook.
+
+After changing `.env.local`, restart the Next.js development server so it reloads the configuration.
+
+## 7. Test the complete workflow
+
+Use two separate browser sessions, for example a normal browser window and a private/incognito window, to represent the two participants.
+
+1. Register or sign in as the provider and create an agreement.
+2. Open the agreement as the customer in the second browser session and sign it.
+3. Sign in as the provider and submit a payment request with a completion statement.
+4. Sign in as the customer and submit an objection if testing that part of the workflow.
+5. Where the assessment permits the request to proceed, check that SignPay creates a PayPal invoice.
+6. Pay the invoice using the separate PayPal Sandbox Personal (buyer) account.
+7. Check the agreement in SignPay. It should show the completed state and payment confirmation after the verified PayPal webhook has been received.
+
+Use the Sandbox Business account as the invoice recipient and the Sandbox Personal account as the payer. Do not use live PayPal accounts or real payment credentials.
+
+## Troubleshooting
+
+- **Assessment service not configured:** check that `SIGNPAY_AGENT_API_KEY` is present in both environment configurations and that the values match. Check that `SIGNPAY_AGENT_URL` points to the running agent.
+- **Agent unavailable:** check that the Astropods project is running and use the URL reported by its CLI.
+- **PayPal business email not configured:** check `PAYPAL_BUSINESS_EMAIL` in the root `.env.local`, then restart Next.js.
+- **Webhook not received:** check that the Cloudflare tunnel is running, that the PayPal webhook URL ends in `/api/paypal/webhook`, and that the Sandbox webhook ID in `.env.local` belongs to that webhook.
+- **Agreement data missing after restarting:** the local SQLite database is stored in `data/signpay.sqlite`. Do not delete the `data/` directory if you want to retain local test data.
 
 ## Hackathon project
 
-SignPay explores how AI assessment can be combined with signed agreements, deterministic checks and payment infrastructure. Its central design principle is to keep the AI's role limited: it assesses text submitted by the participants, while application logic enforces fixed agreement and payment checks, the customer can only object after the provider's request passes its initial assessment, participants retain responsibility for resolving uncertain cases, and PayPal remains responsible for processing payments.
+SignPay demonstrates how AI-assisted assessment can be combined with signed agreements, deterministic checks and payment infrastructure. Its central design principle is to keep the AI's role limited: it assesses information submitted by the participants, application logic enforces fixed agreement and payment checks, uncertain cases can be escalated, and PayPal remains responsible for processing payments.
