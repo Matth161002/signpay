@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         invoiceStatus: typeof invoice?.status === "string" ? invoice.status : "unknown",
       });
 
-      const result = recordPaidPayPalWebhook({
+      const result = await recordPaidPayPalWebhook({
         eventId: event.id as string,
         eventType: event.event_type as string,
         invoiceId,
