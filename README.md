@@ -8,28 +8,21 @@ The assessment is text-based. The provider submits a written completion statemen
 
 ## Judge setup: start here
 
-**Do not create or download an `.env.local` file from GitHub.** It is deliberately excluded from the repository because it will contain private credentials. Instead, create both required files by copying the supplied example files.
+An empty `.env.local` is already included in the repository, in the correct location beside the root `package.json`. Open that file and use the `.env.example` immediately beside it as your guide. Copy the required variable names into `.env.local` and enter your own credentials.
 
-Run this once from the repository root, the folder containing this README:
+You only need to create the AI agent's environment file. From the repository root, run:
 
 **Windows PowerShell**
 ```powershell
-Copy-Item .env.example .env.local
 Copy-Item signpay-agent/.env.example signpay-agent/.env
 ```
 
 **macOS / Linux**
 ```bash
-cp .env.example .env.local
 cp signpay-agent/.env.example signpay-agent/.env
 ```
 
-This creates the files in the correct locations:
-
-- `signpay/.env.local` for the Next.js application, alongside the root `package.json`.
-- `signpay/signpay-agent/.env` for the AI assessment agent.
-
-The example files sit next to the files you have just created. Open each new file and replace its placeholders with your own credentials.
+This creates `signpay/signpay-agent/.env` beside the agent's example file.
 
 ### Main application: `.env.local`
 
@@ -191,21 +184,7 @@ npm install
 
 ## 3. Configure the main application
 
-Copy the root example file to `.env.local`.
-
-**Windows PowerShell:**
-
-```powershell
-Copy-Item .env.example .env.local
-```
-
-**macOS / Linux:**
-
-```bash
-cp .env.example .env.local
-```
-
-Edit `.env.local` and provide the following values:
+Open the empty `.env.local` file already included in the repository. Use `.env.example` beside it as the template, and enter the following values:
 
 | Variable | Value |
 |---|---|
