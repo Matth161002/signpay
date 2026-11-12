@@ -10,7 +10,7 @@ function isAssessment(value: any): boolean {
 async function assessInitial(input: { agreementId:string; service:string; description:string; requirements:string; amount:number; requestedAmount:number; completionStatement:string }) {
   const apiKey=process.env.SIGNPAY_AGENT_API_KEY;
   if(!apiKey || apiKey.length<32) throw new Error("The assessment service is not configured.");
-  const agentUrl=(process.env.SIGNPAY_AGENT_URL ?? "http://localhost:3200").replace(/\\/+$/, "");
+  const agentUrl=(process.env.SIGNPAY_AGENT_URL ?? "http://localhost:3200").replace(/\/+$/, "");
   const response=await fetch(`${agentUrl}/api/assess`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${apiKey}`},body:JSON.stringify({agreementReference:input.agreementId,service:input.service,agreedWork:input.description,requirements:input.requirements.trim()||"No additional specific requirements were recorded.",agreedAmount:input.amount,requestedAmount:input.requestedAmount,completionStatement:input.completionStatement,customerObjection:null}),signal:AbortSignal.timeout(60000),cache:"no-store"});
   const data=await response.json().catch(()=>null);
   if(!response.ok || !isAssessment(data)) throw new Error(data?.error ?? "The assessment service returned an invalid result.");
