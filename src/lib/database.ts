@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { Pool, type PoolClient } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 
 export type UserRecord = { id:string; username:string; displayName:string; passwordHash:string; createdAt:string };
 export type PublicUser = Pick<UserRecord,"id"|"username"|"displayName">;
@@ -91,7 +91,7 @@ export async function completePaymentRequest(id:string,objection:string|null,sta
 export async function updatePayPalInvoice(id:string,d:{recipientEmail:string|null;invoiceId:string|null;invoiceUrl:string|null;invoiceStatus:string;error:string|null}):Promise<void>{await pool().query("UPDATE payment_requests SET paypal_recipient_email=$1,paypal_invoice_id=$2,paypal_invoice_url=$3,paypal_invoice_status=$4,paypal_error=$5,updated_at=$6 WHERE id=$7",[d.recipientEmail,d.invoiceId,d.invoiceUrl,d.invoiceStatus,d.error,new Date().toISOString(),id]);}
 export async function appendAuditEvent(agreementId:string,eventType:AuditEventType,actorRole:AuditEvent["actorRole"]="system",details:Record<string,unknown>={}):Promise<AuditEvent>{const e:AuditEvent={id:randomUUID(),agreementId,eventType,occurredAt:new Date().toISOString(),actorRole,details};await pool().query("INSERT INTO audit_events(id,agreement_id,event_type,occurred_at,actor_role,details_json) VALUES($1,$2,$3,$4,$5,$6)",[e.id,e.agreementId,e.eventType,e.occurredAt,e.actorRole,JSON.stringify(e.details)]);return e;}
 export async function recordPaidPayPalWebhook(input:{eventId:string;eventType:string;invoiceId:string;payload:Record<string,unknown>}):Promise<"recorded"|"duplicate"|"unmatched">{
-  const client:PoolClient=await pool().connect();
+  const client=await pool().connect();
   try{
     await client.query("BEGIN");
     const match=await client.query("SELECT id FROM payment_requests WHERE paypal_invoice_id=$1 FOR UPDATE",[input.invoiceId]);
