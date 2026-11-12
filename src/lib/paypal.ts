@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 const PAYPAL_BASE_URL = "https://api-m.sandbox.paypal.com";
 
 type PayPalInvoiceResult = {
