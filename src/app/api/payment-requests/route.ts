@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Please provide a completion statement and valid requested amount." }, { status: 400 });
     }
 
-    const agreement = getAgreement(agreementId);
+    const agreement = await getAgreement(agreementId);
     if (!agreement) return NextResponse.json({ error: "Agreement not found." }, { status: 404 });
     if (agreement.providerUserId !== user.id) return NextResponse.json({ error: "Only the authenticated service provider can submit a payment request." }, { status: 403 });
     if (agreement.status !== "active" || !agreement.signatures.provider || !agreement.signatures.customer) {
@@ -26,20 +26,20 @@ export async function POST(request: NextRequest) {
     if (!agreement.integrityHash || generateIntegrityHash(agreement) !== agreement.integrityHash) {
       return NextResponse.json({ error: "The agreement integrity check failed. Human review is required." }, { status: 409 });
     }
-    const previous = getLatestPaymentRequest(agreementId);
+    const previous = await getLatestPaymentRequest(agreementId);
     if (previous && previous.status === "awaiting_customer") {
       return NextResponse.json({ error: "A payment request is already awaiting the customer's response." }, { status: 409 });
     }
 
     const id = randomUUID();
     const createdAt = new Date().toISOString();
-    createPaymentRequest({
+    await createPaymentRequest({
       id, agreementId, providerUserId: user.id,
       completionStatement: completionStatement.trim(),
       requestedAmount: Math.round(requestedAmount * 100) / 100,
       status: "awaiting_customer", createdAt,
     });
-    appendAuditEvent(agreementId, "assessment_submitted", "provider", {
+    await appendAuditEvent(agreementId, "assessment_submitted", "provider", {
       requestId: id, requestedAmount: Math.round(requestedAmount * 100) / 100,
       authenticatedUserId: user.id,
     });
