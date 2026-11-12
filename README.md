@@ -34,7 +34,7 @@ The requested payment amount is checked deterministically against the amount in 
 ### Main application
 
 - **Next.js and TypeScript** for the web application and server-side routes.
-- **Neon PostgreSQL** for persistent application data, including users, sessions, agreements, payment requests and audit events.
+- **SQLite**, using Node.js's built-in `node:sqlite` module, for local application data. The database is created automatically at `data/signpay.sqlite` on first launch.
 - **Password hashing and session controls** for account authentication and access to participant agreements.
 - **SHA-256** to calculate an agreement integrity hash after both parties have signed.
 
@@ -92,24 +92,11 @@ signpay/
 └── README.md
 ```
 
-Local databases, agreement data, environment files and credentials are excluded from source control. The agent has its own README with further configuration and development information.
-
-## Hosted demonstration deployment
-
-The deployment branch includes a Render Blueprint in `render.yaml`. It creates the Next.js web service on Render's free web-service plan and uses Neon PostgreSQL for persistent application data.
-
-1. In Render, create a new **Blueprint** and connect this repository.
-2. Select the `deployment/neon-postgres` branch.
-3. When prompted, enter the Neon pooled connection string as `DATABASE_URL`. Do not place it in source control.
-4. Add the PayPal Sandbox credentials and webhook ID.
-5. Set `SIGNPAY_AGENT_URL` to the deployed Astropods agent endpoint and set `SIGNPAY_AGENT_API_KEY` to the same secret configured for that agent.
-6. Deploy and check `/api/health`. It should return a successful database connection status.
-
-The Render service is configured for free hosting. Free services may sleep when idle, so the first request after inactivity can take longer. Neon Free may also suspend compute after its free allowance is exhausted. Check both providers' current limits before the judging window.
-
-The hosted database starts with a fresh schema. Existing data held only in a local SQLite database is not automatically copied to Neon. Create fresh demonstration accounts and agreements after deployment unless a separate data export and import is completed.
+The local SQLite database is created automatically in `data/signpay.sqlite`. Database files, agreement data, environment files and credentials are excluded from source control. The agent has its own README with further configuration and development information.
 
 ## Running locally
+
+The main application stores its data locally. Each judge or developer gets a separate SQLite database on their own computer. No Neon account, hosted database or database configuration is required.
 
 ### Requirements
 
@@ -133,7 +120,7 @@ npm install
 
 ### 3. Configure the main application
 
-Copy the example environment file to `.env.local` in the repository root:
+Copy the example environment file to `.env.local` in the repository root. The SQLite database requires no external service, account or connection string:
 
 ```bash
 cp .env.example .env.local
@@ -143,7 +130,6 @@ Set the following values in `.env.local`:
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | Pooled PostgreSQL connection string copied from your Neon project. Keep it private. |
 | `PAYPAL_CLIENT_ID` | Client ID from your PayPal Developer Sandbox application. |
 | `PAYPAL_CLIENT_SECRET` | Secret from the same Sandbox application. |
 | `PAYPAL_BUSINESS_EMAIL` | Email address of your PayPal Business Sandbox account. |
@@ -151,7 +137,7 @@ Set the following values in `.env.local`:
 | `SIGNPAY_AGENT_URL` | URL at which the local AI agent can be reached. The application defaults to `http://localhost:3200`. |
 | `SIGNPAY_AGENT_API_KEY` | Shared secret used to authenticate requests between the application and agent. Use at least 32 characters. |
 
-Use PayPal Sandbox credentials, not live credentials. The PayPal webhook must be reachable by PayPal during payment testing. For local testing, this requires a public HTTPS tunnel to the application's webhook route, `/api/paypal/webhook`. Register the resulting URL in the PayPal Developer Dashboard and use its webhook ID above.
+Use PayPal Sandbox credentials, not live credentials. The PayPal webhook must be reachable by PayPal during payment testing. For local payment-confirmation testing, PayPal needs a public HTTPS endpoint for `/api/paypal/webhook`. Register that endpoint in the PayPal Developer Dashboard and use its webhook ID above. This is not required to start the application or test agreements and AI assessments.
 
 ### 4. Configure and start the AI agent
 
