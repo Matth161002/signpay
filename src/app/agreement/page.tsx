@@ -16,7 +16,7 @@ type PaymentRequest = {
   id: string; agreementId: string; completionStatement: string;
   requestedAmount: number; customerObjection: string | null;
   status: "awaiting_customer" | "completed" | "failed";
-  assessmentJson: string | null; paypalRecipientEmail: string | null;
+  initialAssessmentJson: string | null; assessmentJson: string | null; paypalRecipientEmail: string | null;
   paypalInvoiceId: string | null; paypalInvoiceUrl: string | null;
   paypalInvoiceStatus: string | null; paypalError: string | null;
   createdAt: string; updatedAt: string;
@@ -185,7 +185,7 @@ export default function AgreementPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to submit payment request.");
       await refreshAgreement(agreement.id);
-      setNotice("Payment request sent to the customer for review.");
+      setNotice("The initial AI assessment has completed. The customer can now review the result.");
       setCompletionStatement(""); setRequestedAmount("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to submit payment request.");
@@ -378,9 +378,11 @@ export default function AgreementPage() {
               </section>
             )}
 
-            {agreement.status === "active" && myRole === "customer" && paymentRequest?.status === "awaiting_customer" && (
+            {agreement.status === "active" && myRole === "customer" && paymentRequest?.status === "awaiting_customer" && paymentRequest.initialAssessmentJson && (
               <section className="mt-6 rounded-xl border border-amber-900 bg-amber-950/20 p-6">
-                <h3 className="text-lg font-semibold">Review payment request</h3>
+                <h3 className="text-lg font-semibold">Initial AI assessment: passed</h3>
+                <p className="mt-2 text-sm text-slate-300">{(JSON.parse(paymentRequest.initialAssessmentJson) as Assessment).explanation}</p>
+                <h3 className="mt-5 text-lg font-semibold">Review payment request</h3>
                 <p className="mt-3 text-sm text-slate-400">Provider's completion statement</p>
                 <p className="mt-1 whitespace-pre-wrap">{paymentRequest.completionStatement}</p>
                 <p className="mt-4 text-sm text-slate-400">Requested amount</p>

@@ -35,6 +35,10 @@ export async function POST(request: NextRequest) {
     if (paymentRequest.status !== "awaiting_customer") {
       return NextResponse.json({ error: "This payment request has already been processed." }, { status: 409 });
     }
+    const initialAssessment = paymentRequest.initialAssessmentJson ? JSON.parse(paymentRequest.initialAssessmentJson) : null;
+    if (!initialAssessment || initialAssessment.outcome !== "PROCEED") {
+      return NextResponse.json({ error: "The initial assessment did not pass. Customer objections cannot be submitted for this request." }, { status: 409 });
+    }
     if (!agreement.integrityHash || generateIntegrityHash(agreement) !== agreement.integrityHash) {
       return NextResponse.json({ error: "The agreement integrity check failed. Human review is required." }, { status: 409 });
     }
@@ -140,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     await appendAuditEvent(agreement.id, "assessment_completed", "system", {
       requestId: paymentRequest.id, outcome: agentData.outcome, assessedAt,
-      submittedByCustomerUserId: user.id,
+      submittedByCustomerUserId: user.id, initialOutcome: initialAssessment.outcome,
     });
     return NextResponse.json({ assessment, invoice: invoiceResult });
   } catch (error) {

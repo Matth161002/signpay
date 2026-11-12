@@ -14,11 +14,11 @@ export type Agreement = {
 };
 export type PaymentRequest = {
   id:string; agreementId:string; providerUserId:string; completionStatement:string; requestedAmount:number;
-  customerObjection:string|null; status:"awaiting_customer"|"completed"|"failed"; assessmentJson:string|null;
+  customerObjection:string|null; status:"awaiting_customer"|"completed"|"failed"; initialAssessmentJson:string|null; assessmentJson:string|null;
   paypalRecipientEmail:string|null; paypalInvoiceId:string|null; paypalInvoiceUrl:string|null;
   paypalInvoiceStatus:string|null; paypalError:string|null; createdAt:string; updatedAt:string;
 };
-export type AuditEventType = "agreement_created"|"provider_signed"|"customer_signed"|"agreement_activated"|"assessment_submitted"|"assessment_completed"|"assessment_failed";
+export type AuditEventType = "agreement_created"|"provider_signed"|"customer_signed"|"agreement_activated"|"assessment_submitted"|"assessment_completed"|"assessment_failed"|"initial_assessment_passed"|"initial_assessment_stopped"|"customer_assessment_completed";
 export type AuditEvent = {id:string;agreementId:string;eventType:AuditEventType;occurredAt:string;actorRole:"provider"|"customer"|"system"|null;details:Record<string,unknown>};
 
 type Row = Record<string, any>;
@@ -31,7 +31,7 @@ function pool():Pool {
 const mapUser=(r:Row):UserRecord=>({id:r.id,username:r.username,displayName:r.display_name,passwordHash:r.password_hash,createdAt:r.created_at});
 const mapPublicUser=(r:Row):PublicUser=>({id:r.id,username:r.username,displayName:r.display_name});
 const mapAgreement=(r:Row):Agreement=>({id:r.id,provider:r.provider,customer:r.customer,providerUserId:r.provider_user_id,customerUserId:r.customer_user_id,service:r.service,description:r.description,requirements:r.requirements,amount:Number(r.amount),createdAt:r.created_at,signatures:JSON.parse(r.signatures_json),status:r.status,integrityHash:r.integrity_hash});
-const mapPayment=(r:Row):PaymentRequest=>({id:r.id,agreementId:r.agreement_id,providerUserId:r.provider_user_id,completionStatement:r.completion_statement,requestedAmount:Number(r.requested_amount),customerObjection:r.customer_objection,status:r.status,assessmentJson:r.assessment_json,paypalRecipientEmail:r.paypal_recipient_email,paypalInvoiceId:r.paypal_invoice_id,paypalInvoiceUrl:r.paypal_invoice_url,paypalInvoiceStatus:r.paypal_invoice_status,paypalError:r.paypal_error,createdAt:r.created_at,updatedAt:r.updated_at});
+const mapPayment=(r:Row):PaymentRequest=>({id:r.id,agreementId:r.agreement_id,providerUserId:r.provider_user_id,completionStatement:r.completion_statement,requestedAmount:Number(r.requested_amount),customerObjection:r.customer_objection,status:r.status,initialAssessmentJson:r.initial_assessment_json,assessmentJson:r.assessment_json,paypalRecipientEmail:r.paypal_recipient_email,paypalInvoiceId:r.paypal_invoice_id,paypalInvoiceUrl:r.paypal_invoice_url,paypalInvoiceStatus:r.paypal_invoice_status,paypalError:r.paypal_error,createdAt:r.created_at,updatedAt:r.updated_at});
 
 export async function ensureDatabaseReady():Promise<void>{
   if(!globalDb.signPayReady){
@@ -45,6 +45,7 @@ export async function ensureDatabaseReady():Promise<void>{
       CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY,agreement_id TEXT NOT NULL REFERENCES agreements(id),event_type TEXT NOT NULL,occurred_at TEXT NOT NULL,actor_role TEXT,details_json TEXT NOT NULL DEFAULT '{}');
       CREATE INDEX IF NOT EXISTS idx_audit_events_agreement_time ON audit_events(agreement_id,occurred_at);
       CREATE TABLE IF NOT EXISTS payment_requests(id TEXT PRIMARY KEY,agreement_id TEXT NOT NULL REFERENCES agreements(id),provider_user_id TEXT NOT NULL REFERENCES users(id),completion_statement TEXT NOT NULL,requested_amount NUMERIC(12,2) NOT NULL CHECK(requested_amount>=0),customer_objection TEXT,status TEXT NOT NULL CHECK(status IN ('awaiting_customer','completed','failed')),assessment_json TEXT,paypal_recipient_email TEXT,paypal_invoice_id TEXT,paypal_invoice_url TEXT,paypal_invoice_status TEXT,paypal_error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+      ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS initial_assessment_json TEXT;
       CREATE INDEX IF NOT EXISTS idx_payment_requests_agreement ON payment_requests(agreement_id,created_at);
       CREATE TABLE IF NOT EXISTS paypal_webhook_events(event_id TEXT PRIMARY KEY,invoice_id TEXT NOT NULL,event_type TEXT NOT NULL,received_at TEXT NOT NULL,payload_json TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS idx_paypal_webhook_invoice ON paypal_webhook_events(invoice_id,received_at);`);
@@ -87,6 +88,7 @@ export async function saveAgreement(a:Agreement):Promise<void>{await pool().quer
 export async function createPaymentRequest(r:Omit<PaymentRequest,"customerObjection"|"assessmentJson"|"updatedAt"|"paypalRecipientEmail"|"paypalInvoiceId"|"paypalInvoiceUrl"|"paypalInvoiceStatus"|"paypalError">):Promise<void>{const now=new Date().toISOString();await pool().query(`INSERT INTO payment_requests(id,agreement_id,provider_user_id,completion_statement,requested_amount,customer_objection,status,assessment_json,created_at,updated_at) VALUES($1,$2,$3,$4,$5,NULL,$6,NULL,$7,$8)`,[r.id,r.agreementId,r.providerUserId,r.completionStatement,r.requestedAmount,r.status,r.createdAt,now]);}
 export async function getPaymentRequest(id:string):Promise<PaymentRequest|null>{const r=await pool().query("SELECT * FROM payment_requests WHERE id=$1",[id]);return r.rows[0]?mapPayment(r.rows[0]):null;}
 export async function getLatestPaymentRequest(id:string):Promise<PaymentRequest|null>{const r=await pool().query("SELECT * FROM payment_requests WHERE agreement_id=$1 ORDER BY created_at DESC LIMIT 1",[id]);return r.rows[0]?mapPayment(r.rows[0]):null;}
+export async function saveInitialAssessment(id:string,assessment:Record<string,unknown>,awaitingCustomer:boolean):Promise<void>{await pool().query("UPDATE payment_requests SET initial_assessment_json=$1,assessment_json=$2,status=$3,updated_at=$4 WHERE id=$5",[JSON.stringify(assessment),awaitingCustomer?null:JSON.stringify(assessment),awaitingCustomer?"awaiting_customer":"completed",new Date().toISOString(),id]);}
 export async function completePaymentRequest(id:string,objection:string|null,status:PaymentRequest["status"],assessment:Record<string,unknown>|null):Promise<void>{await pool().query("UPDATE payment_requests SET customer_objection=$1,status=$2,assessment_json=$3,updated_at=$4 WHERE id=$5",[objection,status,assessment?JSON.stringify(assessment):null,new Date().toISOString(),id]);}
 export async function updatePayPalInvoice(id:string,d:{recipientEmail:string|null;invoiceId:string|null;invoiceUrl:string|null;invoiceStatus:string;error:string|null}):Promise<void>{await pool().query("UPDATE payment_requests SET paypal_recipient_email=$1,paypal_invoice_id=$2,paypal_invoice_url=$3,paypal_invoice_status=$4,paypal_error=$5,updated_at=$6 WHERE id=$7",[d.recipientEmail,d.invoiceId,d.invoiceUrl,d.invoiceStatus,d.error,new Date().toISOString(),id]);}
 export async function appendAuditEvent(agreementId:string,eventType:AuditEventType,actorRole:AuditEvent["actorRole"]="system",details:Record<string,unknown>={}):Promise<AuditEvent>{const e:AuditEvent={id:randomUUID(),agreementId,eventType,occurredAt:new Date().toISOString(),actorRole,details};await pool().query("INSERT INTO audit_events(id,agreement_id,event_type,occurred_at,actor_role,details_json) VALUES($1,$2,$3,$4,$5,$6)",[e.id,e.agreementId,e.eventType,e.occurredAt,e.actorRole,JSON.stringify(e.details)]);return e;}
