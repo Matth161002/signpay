@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, PointerEvent, useEffect, useRef, useState } from "react";
 
 type User = { id: string; username: string; displayName: string };
@@ -50,7 +51,6 @@ export default function AgreementPage() {
   const [requestedAmount, setRequestedAmount] = useState("");
   const [customerObjection, setCustomerObjection] = useState("");
   const [paypalEmail, setPaypalEmail] = useState("");
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
 
@@ -60,7 +60,6 @@ export default function AgreementPage() {
     if (!response.ok) throw new Error(data.error || "Unable to load agreement.");
     setAgreement(data.agreement);
     setPaymentRequest(data.paymentRequest ?? null);
-    setAssessment(data.paymentRequest?.assessmentJson ? JSON.parse(data.paymentRequest.assessmentJson) : null);
   }
 
   useEffect(() => {
@@ -99,7 +98,7 @@ export default function AgreementPage() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null); setAgreement(null); setPaymentRequest(null); setAssessment(null);
+    setUser(null); setAgreement(null); setPaymentRequest(null);
     window.history.replaceState(null, "", "/agreement");
     setNotice("You have signed out.");
   }
@@ -220,8 +219,8 @@ export default function AgreementPage() {
     <main className="min-h-screen bg-slate-950 px-6 py-12 text-white">
       <div className="mx-auto max-w-3xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <a href="/" className="text-sm text-blue-400 hover:text-blue-300">Back to SignPay</a>
-          {user && <a href="/agreements" className="text-sm text-blue-400 hover:text-blue-300">My agreements</a>}
+          <Link href="/" className="text-sm text-blue-400 hover:text-blue-300">Back to SignPay</Link>
+          {user && <Link href="/agreements" className="text-sm text-blue-400 hover:text-blue-300">My agreements</Link>}
         </div>
         <div className="mt-6 flex items-center justify-between gap-4">
           <h1 className="text-3xl font-bold">SignPay</h1>
@@ -286,7 +285,7 @@ export default function AgreementPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm text-slate-300">Other participant's username</label>
+                  <label className="mb-2 block text-sm text-slate-300">Other participant&apos;s username</label>
                   <input value={counterpartyUsername} onChange={e => setCounterpartyUsername(e.target.value)} required className="w-full rounded-lg border border-slate-700 bg-slate-950 p-3" />
                 </div>
                 <div>
@@ -368,7 +367,7 @@ export default function AgreementPage() {
             {agreement.status === "active" && myRole === "provider" && (
               <section className="mt-6 rounded-xl border border-blue-900 bg-blue-950/20 p-6">
                 <h3 className="text-lg font-semibold">Submit payment request</h3>
-                {paymentRequest?.status === "awaiting_customer" ? <p className="mt-3 text-sm text-amber-300">Your payment request is awaiting the customer's response.</p> : (
+                {paymentRequest?.status === "awaiting_customer" ? <p className="mt-3 text-sm text-amber-300">Your payment request is awaiting the customer&apos;s response.</p> : (
                   <form onSubmit={submitPaymentRequest} className="mt-4 space-y-4">
                     <div><label className="mb-2 block text-sm text-slate-300">Completion statement</label><textarea value={completionStatement} onChange={e => setCompletionStatement(e.target.value)} rows={4} maxLength={5000} required className="w-full rounded-lg border border-slate-700 bg-slate-950 p-3" /></div>
                     <div><label className="mb-2 block text-sm text-slate-300">Requested payment amount (£)</label><input type="number" min="0" step="0.01" value={requestedAmount} onChange={e => setRequestedAmount(e.target.value)} required className="w-full rounded-lg border border-slate-700 bg-slate-950 p-3" /><p className="mt-1 text-xs text-slate-500">Agreed amount: £{agreement.amount.toFixed(2)}</p></div>
@@ -383,7 +382,7 @@ export default function AgreementPage() {
                 <h3 className="text-lg font-semibold">Initial AI assessment: passed</h3>
                 <p className="mt-2 text-sm text-slate-300">{(JSON.parse(paymentRequest.initialAssessmentJson) as Assessment).explanation}</p>
                 <h3 className="mt-5 text-lg font-semibold">Review payment request</h3>
-                <p className="mt-3 text-sm text-slate-400">Provider's completion statement</p>
+                <p className="mt-3 text-sm text-slate-400">Provider&apos;s completion statement</p>
                 <p className="mt-1 whitespace-pre-wrap">{paymentRequest.completionStatement}</p>
                 <p className="mt-4 text-sm text-slate-400">Requested amount</p>
                 <p className="text-xl font-semibold">£{paymentRequest.requestedAmount.toFixed(2)}</p>
@@ -436,7 +435,7 @@ function AssessmentDisplay({ assessment, paymentRequest }: { assessment: Assessm
             <p className="mt-2 text-sm text-green-300">Invoice created and sent to {paymentRequest.paypalRecipientEmail}. Payment is awaiting confirmation.</p>
             <p className="mt-1 text-xs text-slate-400">PayPal invoice reference: {paymentRequest.paypalInvoiceId}</p>
             {paymentRequest.paypalInvoiceUrl && <a href={paymentRequest.paypalInvoiceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm text-blue-400 underline">Open PayPal payment page</a>}
-            {!paymentRequest.paypalInvoiceUrl && <p className="mt-2 text-sm text-slate-400">The invoice has been sent by PayPal. Check the buyer's Sandbox email for the payment link.</p>}
+            {!paymentRequest.paypalInvoiceUrl && <p className="mt-2 text-sm text-slate-400">The invoice has been sent by PayPal. Check the buyer&apos;s Sandbox email for the payment link.</p>}
           </>
         ) : paymentRequest.paypalInvoiceStatus === "FAILED" ? (
           <p className="mt-2 text-sm text-amber-300">The assessment succeeded, but PayPal could not create or send the invoice. {paymentRequest.paypalError}</p>
