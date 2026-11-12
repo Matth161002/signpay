@@ -8,7 +8,7 @@ The assessment is text-based. The provider submits a written completion statemen
 
 ## Demonstration
 
-The screenshots below document one complete test transaction in chronological order, from creating the agreement to PayPal confirming payment. Some screenshots show successive states of the same agreement.
+The screenshots below show one complete test transaction in chronological order. Several capture successive states of the same agreement.
 
 ### 1. Create the agreement
 
@@ -16,39 +16,43 @@ The screenshots below document one complete test transaction in chronological or
 
 ### 2. Agreement created, awaiting signatures
 
-![Agreement review with both signature records awaiting signatures](docs/screenshots/02-agreement-awaiting-signatures.png)
+![Agreement review showing both participants awaiting signatures](docs/screenshots/02-agreement-awaiting-signatures.png)
 
-### 3. Provider signature recorded
+### 3. Provider enters their signature
 
-![Provider signature recorded while the customer signature is pending](docs/screenshots/03-provider-signed.png)
+![Provider entering their signature in the signature area](docs/screenshots/03-provider-signature-entry.png)
 
-### 4. Both participants have signed
+### 4. Provider signature recorded
 
-![Active agreement showing both participant signatures](docs/screenshots/04-agreement-active.png)
+![Provider signature recorded while the customer signature is pending](docs/screenshots/04-provider-signature-recorded.png)
 
-### 5. Provider submits a payment request
+### 5. Both participants have signed
 
-![Provider submits the completion statement and requested payment amount](docs/screenshots/05-submit-payment-request.png)
+![Active agreement showing both participant signatures](docs/screenshots/05-agreement-active.png)
 
-### 6. Payment request sent to the customer
+### 6. Provider submits a payment request
 
-![Payment request awaiting the customer's response](docs/screenshots/06-payment-request-sent.png)
+![Provider submits the completion statement and requested payment amount](docs/screenshots/06-submit-payment-request.png)
 
-### 7. AI assessment and PayPal invoice
+### 7. Payment request sent to the customer
 
-![PROCEED assessment and PayPal invoice creation](docs/screenshots/07-ai-assessment-invoice.png)
+![Payment request awaiting the customer's response](docs/screenshots/07-payment-request-sent.png)
 
-### 8. PayPal confirms payment
+### 8. AI assessment and PayPal invoice
 
-![PayPal payment successful confirmation screen](docs/screenshots/08-paypal-payment-successful.png)
+![PROCEED assessment and PayPal invoice creation](docs/screenshots/08-ai-assessment-invoice.png)
 
-### 9. Completed agreement in the agreements list
+### 9. PayPal confirms payment
 
-![My agreements list showing the completed piano lesson agreement](docs/screenshots/09-agreements-list-completed.png)
+![PayPal payment successful confirmation screen](docs/screenshots/09-paypal-payment-successful.png)
 
-### 10. Final completed agreement record
+### 10. Completed agreement in the agreements list
 
-![Completed agreement with AI assessment and PayPal payment confirmation](docs/screenshots/10-agreement-completed.png)
+![My agreements list showing the completed piano lesson agreement](docs/screenshots/10-agreements-list-completed.png)
+
+### 11. Final completed agreement record
+
+![Completed agreement with AI assessment and PayPal payment confirmation](docs/screenshots/11-agreement-completed.png)
 
 These screenshots are from a successful PayPal Sandbox test. The AI assessment is based on information submitted by the participants. It does not independently verify that the physical work took place.
 
