@@ -8,30 +8,32 @@ The assessment is text-based. The provider submits a written completion statemen
 
 ## Judge setup: start here
 
-**Important: create both environment files inside the cloned `signpay` repository. Do not put them in the parent folder.**
+**Do not create or download an `.env.local` file from GitHub.** It is deliberately excluded from the repository because it will contain private credentials. Instead, create both required files by copying the supplied example files.
 
-There are two separate configuration files:
-
-1. `signpay/.env.local` for the Next.js application, copied from the root `.env.example`.
-2. `signpay/signpay-agent/.env` for the AI agent, copied from `signpay-agent/.env.example`.
-
-The paths below are relative to the repository root, the folder containing this README and the main `package.json`.
-
-### Main application: `.env.local`
-
-Copy the example file:
+Run this once from the repository root, the folder containing this README:
 
 **Windows PowerShell**
 ```powershell
 Copy-Item .env.example .env.local
+Copy-Item signpay-agent/.env.example signpay-agent/.env
 ```
 
 **macOS / Linux**
 ```bash
 cp .env.example .env.local
+cp signpay-agent/.env.example signpay-agent/.env
 ```
 
-The resulting file must be at `signpay/.env.local`, alongside the root `package.json`. Open it and replace the placeholders with your own credentials:
+This creates the files in the correct locations:
+
+- `signpay/.env.local` for the Next.js application, alongside the root `package.json`.
+- `signpay/signpay-agent/.env` for the AI assessment agent.
+
+The example files sit next to the files you have just created. Open each new file and replace its placeholders with your own credentials.
+
+### Main application: `.env.local`
+
+Open `signpay/.env.local` and enter:
 
 ```dotenv
 # PayPal Developer Sandbox application
@@ -47,19 +49,7 @@ SIGNPAY_AGENT_API_KEY=replace_with_a_random_secret_of_at_least_32_characters
 
 ### AI agent: `signpay-agent/.env`
 
-Copy the agent example:
-
-**Windows PowerShell**
-```powershell
-Copy-Item signpay-agent/.env.example signpay-agent/.env
-```
-
-**macOS / Linux**
-```bash
-cp signpay-agent/.env.example signpay-agent/.env
-```
-
-The resulting file must be at `signpay/signpay-agent/.env`. Open it and enter your Astropods Gateway details and the shared secret:
+Open `signpay/signpay-agent/.env` and enter your Astropods Gateway details and the shared secret:
 
 ```dotenv
 ASTRO_GATEWAY_URL=your_astropods_gateway_url
