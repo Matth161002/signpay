@@ -35,10 +35,21 @@ The agent is built using:
 - **TypeScript** for the application logic.
 - **Bun** as the JavaScript runtime.
 - **Mastra** for the AI agent framework.
-- **Astropods AI Gateway** for managed model access.
+- **Astropods AI Gateway** for managed model inference.
+- **`@astropods/adapter-mastra`** to connect the Mastra agent to the Astropods runtime.
 - **Zod** for input and output validation.
 
 The agent communicates with the main SignPay Next.js application through an authenticated HTTP API.
+
+### How Astropods is integrated
+
+Astropods is the model-access layer used by the SignPay AI agent. The integration is configured in `astropods.yml`, where the default provider is set to `gateway` and the model is set to `claude-sonnet-4-6` (Claude Sonnet 4.6).
+
+When the agent is started with the Astropods CLI, Astropods makes the AI Gateway development credentials available as the `ASTRO_GATEWAY_URL` and `ASTRO_GATEWAY_API_KEY` environment variables. The agent reads these values and uses the Vercel AI SDK's OpenAI-compatible client, configured with the Gateway URL and API key, to connect to the Gateway's `/v1` endpoint. Mastra's agent model function calls `gateway.chat(...)` with the configured model name, so the assessment inference is sent through Astropods AI Gateway to Claude Sonnet 4.6.
+
+The `@astropods/adapter-mastra` package provides the `serve` adapter used by the agent to run within the Astropods environment. The Astropods CLI also manages the local project configuration and secret input used for the shared `SIGNPAY_AGENT_API_KEY`. This shared key is separate from the Gateway credentials: it authenticates requests from the main SignPay application to the assessment endpoint.
+
+As a result, Astropods is directly involved in the running application: it provides the Gateway connection used for the AI assessment, rather than simply appearing in the list of development tools. The agent does not call Anthropic's API directly.
 
 ## API endpoints
 
