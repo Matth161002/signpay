@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: signpay
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: deployment/neon-postgres
+    buildCommand: npm install --no-audit --no-fund && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: DATABASE_URL
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_BUSINESS_EMAIL
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: SIGNPAY_AGENT_URL
+        sync: false
+      - key: SIGNPAY_AGENT_API_KEY
+        sync: false
