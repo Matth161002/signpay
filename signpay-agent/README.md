@@ -69,13 +69,12 @@ The response contains:
 
 The agent is configured through `astropods.yml` and environment variables.
 
-Required environment variables:
+Runtime configuration:
 
-| Variable | Purpose |
-|---|---|
-| `ASTRO_GATEWAY_URL` | Astropods AI Gateway endpoint. |
-| `ASTRO_GATEWAY_API_KEY` | Authentication for the AI Gateway. |
-| `SIGNPAY_AGENT_API_KEY` | Shared authentication key between SignPay and the agent. |
+- `ASTRO_GATEWAY_URL` and `ASTRO_GATEWAY_API_KEY` are supplied automatically by Astropods when the agent runs through `ast project start` with the Gateway model configuration.
+- `SIGNPAY_AGENT_API_KEY` is a shared authentication key between SignPay and the agent. It is declared as a secret input in `astropods.yml` and configured locally using `ast project configure`.
+
+For the judge setup, no `signpay-agent/.env` file is required. The root application still uses `signpay/.env.local`, and its `SIGNPAY_AGENT_API_KEY` value must match the value configured through Astropods.
 
 Optional environment variables:
 
@@ -94,13 +93,15 @@ Requirements:
 - Astropods CLI.
 - An authenticated Astropods account.
 
-Copy the example environment file and configure the required values:
+For local development through Astropods, configure the secret input from this directory:
 
 ```bash
-cp .env.example .env
+ast project configure
 ```
 
-Set `ASTRO_GATEWAY_URL`, `ASTRO_GATEWAY_API_KEY`, and `SIGNPAY_AGENT_API_KEY` in `.env`. The shared SignPay key must match the value in the main application's `.env.local`. Use a random value of at least 32 characters.
+Set `SIGNPAY_AGENT_API_KEY` when prompted. It must match the value in the main application's `.env.local` and should be a random value of at least 32 characters. Astropods supplies the AI Gateway development credentials automatically when the agent starts.
+
+A `.env` file copied from `.env.example` is only needed if you choose to run the agent directly with Bun outside the Astropods-managed workflow.
 
 Install dependencies:
 
