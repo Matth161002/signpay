@@ -129,9 +129,6 @@ Set the following values in `.env.local`:
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | Pooled PostgreSQL connection string copied from your Neon project. Keep it private. |
-
-| Variable | Purpose |
-|---|---|
 | `PAYPAL_CLIENT_ID` | Client ID from your PayPal Developer Sandbox application. |
 | `PAYPAL_CLIENT_SECRET` | Secret from the same Sandbox application. |
 | `PAYPAL_BUSINESS_EMAIL` | Email address of your PayPal Business Sandbox account. |
