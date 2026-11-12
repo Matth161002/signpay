@@ -31,7 +31,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return expected.length === derived.length && timingSafeEqual(expected, derived);
 }
 
-export function await createLoginSession(userId: string): string {
+export async function createLoginSession(userId: string): Promise<string> {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
   await createSession(hashSessionToken(token), userId, expiresAt);
